@@ -83,4 +83,5 @@ Events are all logged in the `Last` schedule inside the `LogEventSet` therefore 
 
 | Bevy | bevy_auto_log_events |
 | ---- | -------------------- |
+| 0.14 | 0.2                  |
 | 0.13 | 0.1                  |
