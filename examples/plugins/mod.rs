@@ -19,7 +19,6 @@ pub(super) fn plugin(app: &mut App) {
     add_event::<C>(app);
     add_event::<D>(app);
     add_event::<E>(app);
-    add_event::<F>(app);
     app.add_plugins((bar::plugin, foo::plugin, baz::plugin, qux::plugin));
 }
 
@@ -51,6 +50,3 @@ struct D;
 
 #[derive(Event, Debug, Default)]
 struct E;
-
-#[derive(Event, Debug, Default)]
-struct F;

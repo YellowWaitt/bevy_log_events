@@ -6,12 +6,12 @@
 
 # bevy_log_events
 
-[`bevy_log_events`]() is a [Bevy](https://bevyengine.org/) plugin that introduce the [`add_and_log_event`]() function for Bevy's App. This plugin lets you log your Event while allowing you to configure independently how each Event are logged during program execution.
+[`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a [Bevy](https://bevyengine.org/) plugin that introduce the `add_and_log_event` function for Bevy's App. This plugin lets you log your Event while allowing you to configure independently how each Event are logged during program execution.
 
 ## Features
 
 - Log your events without having to place print in several places inside your code
-- You can configure independently how each events will be logged using the [`LoggedEventSettings<T>`]() resources
+- You can configure independently how each events will be logged using the `LoggedEventSettings<T>` resources
 - Your settings are saved when you exit your application and reloaded the next time you launch it
 - Using [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) and the `editor_window` feature, you can use a window to edit the settings for all your logged events :
 
@@ -77,7 +77,7 @@ cargo run --example window --features editor_window
 
 ## Notes
 
-Events are all logged in the `Last` schedule inside the [`LogEventSet`]() therefore if many events are sent in the same frame they will not be logged in the same order they are sent.
+Events are all logged in the `Last` schedule inside the `LogEventSet` therefore if many events are sent in the same frame they will not be logged in the same order they are sent.
 
 ## Bevy Versions Table
 

@@ -3,7 +3,7 @@ mod plugins;
 use bevy::{
     app::AppExit,
     prelude::*,
-    window::{WindowClosed, WindowCreated, WindowResized},
+    window::{AppLifecycle, WindowClosed, WindowCreated, WindowResized},
 };
 use bevy_editor_pls::EditorPlugin;
 use bevy_log_events::prelude::*;
@@ -23,6 +23,7 @@ fn main() {
         .log_event::<CursorEntered>()
         .log_event::<CursorLeft>()
         .log_event::<WindowMoved>()
+        .log_event::<AppLifecycle>()
         .log_event::<AppExit>()
         .add_systems(Startup, setup)
         .run();

@@ -1,6 +1,7 @@
 #![warn(missing_docs)]
 
-//! [`bevy_log_events`]() is a [Bevy](https://bevyengine.org/) plugin that introduce
+//! [`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a
+//! [Bevy](https://bevyengine.org/) plugin that introduce
 //! the [add_and_log_event](LogEvent::add_and_log_event) function for Bevy's App.
 //! This plugin lets you log your Event while allowing you to configure independently
 //! how each Event are logged during program execution.
@@ -19,7 +20,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bevy::{app::AppExit, ecs::component::ComponentId, log::Level, prelude::*};
+use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
 
 use ron::{de::from_reader, ser::PrettyConfig};
 use serde::{Deserialize, Serialize};

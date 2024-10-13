@@ -6,6 +6,11 @@ LoggedEventsSettings(
             pretty: true,
             level: "ERROR",
         ),
+        "bevy_window::event::AppLifecycle": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "WARN",
+        ),
         "bevy_window::event::CursorEntered": EventSettings(
             enabled: true,
             pretty: false,
@@ -63,11 +68,6 @@ LoggedEventsSettings(
         ),
         "window::plugins::E": EventSettings(
             enabled: false,
-            pretty: true,
-            level: "INFO",
-        ),
-        "window::plugins::F": EventSettings(
-            enabled: true,
             pretty: true,
             level: "INFO",
         ),
