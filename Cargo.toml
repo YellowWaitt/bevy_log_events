@@ -1,6 +1,6 @@
 [package]
 name = "bevy_log_events"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A Bevy plugin that log events"
 repository = "https://github.com/YellowWaitt/bevy_log_events"
