@@ -1,0 +1,215 @@
+LoggedEventsSettings(
+    plugin_enabled: true,
+    events_settings: {
+        "bevy_app::app::AppExit": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "ERROR",
+        ),
+        "bevy_window::event::CursorEntered": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "bevy_window::event::CursorLeft": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "bevy_window::event::CursorMoved": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "TRACE",
+        ),
+        "bevy_window::event::WindowClosed": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "DEBUG",
+        ),
+        "bevy_window::event::WindowCreated": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "WARN",
+        ),
+        "bevy_window::event::WindowMoved": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "DEBUG",
+        ),
+        "bevy_window::event::WindowResized": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "DEBUG",
+        ),
+        "window::plugins::A": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::B": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::C": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::D": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::E": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::F": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::A": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::B": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::C": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::D": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::E": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::F": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::bar::G": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::A": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::B": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::C": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::D": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::E": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::F": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::baz::G": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::A": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::B": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::C": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::D": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::E": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::F": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::foo::G": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::A": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::B": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::C": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::D": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::E": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::F": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "window::plugins::qux::G": EventSettings(
+            enabled: false,
+            pretty: true,
+            level: "INFO",
+        ),
+    },
+)

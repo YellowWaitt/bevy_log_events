@@ -1,0 +1,56 @@
+use std::collections::BTreeMap;
+
+use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
+
+use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+
+use crate::EventSettings;
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct LoggedEventsSettings {
+    pub plugin_enabled: bool,
+    pub events_settings: BTreeMap<String, EventSettings>,
+}
+
+pub(crate) fn level_to_string(level: Level) -> String {
+    format!("{}", level)
+}
+
+pub(crate) fn serialize_level<S>(level: &Level, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(&level_to_string(*level))
+}
+
+pub(crate) fn deserialize_level<'de, D>(d: D) -> Result<Level, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: &str = Deserialize::deserialize(d)?;
+    match s {
+        "ERROR" => Ok(Level::ERROR),
+        "WARN" => Ok(Level::WARN),
+        "INFO" => Ok(Level::INFO),
+        "DEBUG" => Ok(Level::DEBUG),
+        "TRACE" => Ok(Level::TRACE),
+        _ => Err(D::Error::custom(format!(
+            "\"{}\" does not represent a valid log Level",
+            s
+        ))),
+    }
+}
+
+pub(crate) fn get_log_settings_by_id<'a>(world: &'a World, id: &ComponentId) -> &'a EventSettings {
+    let ptr = world.get_resource_by_id(*id).unwrap();
+    unsafe { ptr.deref::<EventSettings>() }
+}
+
+#[cfg(feature = "editor_window")]
+pub(crate) fn get_log_settings_mut_by_id<'a>(
+    world: &'a mut World,
+    id: &ComponentId,
+) -> &'a mut EventSettings {
+    let mut_ptr = world.get_resource_mut_by_id(*id).unwrap();
+    unsafe { mut_ptr.into_inner().deref_mut::<EventSettings>() }
+}

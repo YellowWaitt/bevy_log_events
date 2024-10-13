@@ -1,0 +1,15 @@
+LoggedEventsSettings(
+    plugin_enabled: true,
+    events_settings: {
+        "bevy_window::event::CursorEntered": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "simple::MyEvent": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+    },
+)
