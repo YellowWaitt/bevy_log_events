@@ -1,3 +1,9 @@
+[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/YellowWaitt/bevy_log_events#license)
+[![crates.io](https://img.shields.io/crates/v/bevy_log_events)](https://crates.io/crates/bevy_log_events)
+[![docs.rs](https://docs.rs/bevy_log_events/badge.svg)](https://docs.rs/bevy_log_events)
+[![Following released Bevy versions](https://img.shields.io/badge/Bevy%20tracking-released%20version-lightblue)](https://bevyengine.org/learn/quick-start/plugin-development/#main-branch-tracking)
+
+
 # bevy_log_events
 
 [`bevy_log_events`]() is a [Bevy](https://bevyengine.org/) plugin that introduce the [`add_and_log_event`]() function for Bevy's App. This plugin lets you log your Event while allowing you to configure independently how each Event are logged during program execution.
