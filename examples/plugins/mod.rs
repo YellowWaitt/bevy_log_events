@@ -3,14 +3,16 @@ mod baz;
 mod foo;
 mod qux;
 
-use bevy::{prelude::*, time::Stopwatch};
+use std::time::Duration;
+
+use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_log_events::prelude::*;
 
-use rand::Rng;
-
 fn add_event<T: Event + std::fmt::Debug + Default>(app: &mut App) {
-    app.add_and_log_event::<T>()
-        .add_systems(Update, fire_event::<T>);
+    app.add_and_log_event::<T>().add_systems(
+        Update,
+        fire_event::<T>.run_if(on_timer(Duration::from_secs(1))),
+    );
 }
 
 pub(super) fn plugin(app: &mut App) {
@@ -22,18 +24,8 @@ pub(super) fn plugin(app: &mut App) {
     app.add_plugins((bar::plugin, foo::plugin, baz::plugin, qux::plugin));
 }
 
-fn fire_event<T: Event + Default>(
-    time: Res<Time>,
-    mut events: EventWriter<T>,
-    mut stopwatch: Local<Stopwatch>,
-    mut trigger: Local<f32>,
-) {
-    stopwatch.tick(time.delta());
-    if stopwatch.elapsed_secs() > *trigger {
-        stopwatch.reset();
-        *trigger = rand::thread_rng().gen_range(1.0..5.0);
-        events.send(T::default());
-    }
+fn fire_event<T: Event + Default>(mut events: EventWriter<T>) {
+    events.send(T::default());
 }
 
 #[derive(Event, Debug, Default)]

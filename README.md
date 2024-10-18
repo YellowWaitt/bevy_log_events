@@ -26,7 +26,9 @@ cargo add bevy_log_events
 
 Then  you just have to add the `LogEventsPlugin` plugin and use `add_and_log_event` to register your events instead of `add_event` :
 ```rust
-use bevy::{prelude::*, time::Stopwatch};
+use std::time::Duration;
+
+use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_log_events::prelude::*;
 
 // You must implement Debug for the events you want to log
@@ -44,23 +46,17 @@ fn main() {
         .add_and_log_event::<MyEvent>()
         // Using log_event you can also log external events you did not add yourself
         .log_event::<CursorEntered>()
-        .add_systems(Update, emit_my_event)
+        .add_systems(
+            Update,
+            emit_my_event.run_if(on_timer(Duration::from_secs(1))),
+        )
         .run();
 }
 
 // MyEvent will be sent and logged every second
-fn emit_my_event(
-    time: Res<Time>,
-    mut events: EventWriter<MyEvent>,
-    mut stopwatch: Local<Stopwatch>,
-) {
-    stopwatch.tick(time.delta());
-    if stopwatch.elapsed_secs() > 1.0 {
-        stopwatch.reset();
-        events.send(MyEvent);
-    }
+fn emit_my_event(mut events: EventWriter<MyEvent>) {
+    events.send(MyEvent);
 }
-
 ```
 
 ## Examples
