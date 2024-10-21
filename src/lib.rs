@@ -193,6 +193,10 @@ pub trait LogEvent {
     fn add_and_log_event<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug;
+
+    fn log_triggered<E>(&mut self) -> &mut Self
+    where
+        E: Event + std::fmt::Debug;
 }
 
 impl LogEvent for App {
@@ -210,6 +214,20 @@ impl LogEvent for App {
         E: Event + std::fmt::Debug,
     {
         self.add_event::<E>().log_event::<E>()
+    }
+
+    fn log_triggered<E>(&mut self) -> &mut Self
+    where
+        E: Event + std::fmt::Debug,
+    {
+        let observer = Observer::new(log_triggered::<E>);
+        self.world_mut().spawn((
+            observer,
+            Name::new(format!("LogObserver::<{}>", type_name::<E>())),
+        ));
+        self.insert_resource(LoggedEventSettings::<E>::default())
+            .add_systems(Startup, register_event::<E>)
+            .add_systems(Last, log_event::<E>.in_set(LogEventsSet))
     }
 }
 
@@ -230,6 +248,24 @@ fn register_event<E: Event>(world: &mut World) {
     });
 }
 
+fn log<E>(settings: &LoggedEventSettings<E>, event: &E)
+where
+    E: Event + std::fmt::Debug,
+{
+    let to_log = if settings.pretty {
+        format!("{}: {:#?}", type_name::<E>(), event)
+    } else {
+        format!("{}: {:?}", type_name::<E>(), event)
+    };
+    match settings.level {
+        Level::ERROR => error!("{}", to_log),
+        Level::WARN => warn!("{}", to_log),
+        Level::INFO => info!("{}", to_log),
+        Level::DEBUG => debug!("{}", to_log),
+        Level::TRACE => trace!("{}", to_log),
+    }
+}
+
 fn log_event<E>(settings: Res<LoggedEventSettings<E>>, mut events: EventReader<E>)
 where
     E: Event + std::fmt::Debug,
@@ -238,19 +274,22 @@ where
         return;
     }
     for event in events.read() {
-        let to_log = if settings.pretty {
-            format!("{}: {:#?}", type_name::<E>(), event)
-        } else {
-            format!("{}: {:?}", type_name::<E>(), event)
-        };
-        match settings.level {
-            Level::ERROR => error!("{}", to_log),
-            Level::WARN => warn!("{}", to_log),
-            Level::INFO => info!("{}", to_log),
-            Level::DEBUG => debug!("{}", to_log),
-            Level::TRACE => trace!("{}", to_log),
-        }
+        log(&settings, event);
     }
+}
+
+fn log_triggered<E>(
+    trigger: Trigger<E>,
+    plugin_settings: Res<LogEventsPluginSettings>,
+    settings: Res<LoggedEventSettings<E>>,
+) where
+    E: Event + std::fmt::Debug,
+{
+    if !plugin_settings.enabled || !settings.enabled {
+        return;
+    }
+    let event = trigger.event();
+    log(&settings, event);
 }
 
 fn save_settings(world: &mut World) {

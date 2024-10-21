@@ -1,0 +1,15 @@
+LoggedEventsSettings(
+    plugin_enabled: true,
+    events_settings: {
+        "observers::Explode": EventSettings(
+            enabled: true,
+            pretty: true,
+            level: "INFO",
+        ),
+        "observers::ExplodeMines": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+    },
+)

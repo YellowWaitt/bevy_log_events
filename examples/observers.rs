@@ -7,9 +7,16 @@ use bevy::{
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
+use bevy_editor_pls::EditorPlugin;
+use bevy_log_events::prelude::*;
+
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((
+            DefaultPlugins,
+            EditorPlugin::default(),
+            LogEventsPlugin::new("assets/observers.ron"),
+        ))
         .init_resource::<SpatialIndex>()
         .add_systems(Startup, setup)
         .add_systems(Update, (draw_shapes, handle_click))
@@ -39,6 +46,8 @@ fn main() {
         // This observer runs whenever the `Mine` component is removed from an entity (including despawning it)
         // and removes it from the spatial index.
         .observe(on_remove_mine)
+        .log_triggered::<Explode>()
+        .log_triggered::<ExplodeMines>()
         .run();
 }
 
@@ -60,17 +69,20 @@ impl Mine {
     }
 }
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 struct ExplodeMines {
     pos: Vec2,
     radius: f32,
 }
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 struct Explode;
 
+#[derive(Component)]
+struct MainCamera;
+
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn((Camera2dBundle::default(), MainCamera));
     commands.spawn(
         TextBundle::from_section(
             "Click on a \"Mine\" to trigger it.\n\
@@ -175,7 +187,7 @@ fn draw_shapes(mut gizmos: Gizmos, mines: Query<&Mine>) {
 // Trigger `ExplodeMines` at the position of a given click
 fn handle_click(
     mouse_button_input: Res<ButtonInput<MouseButton>>,
-    camera: Query<(&Camera, &GlobalTransform)>,
+    camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     windows: Query<&Window>,
     mut commands: Commands,
 ) {

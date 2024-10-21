@@ -39,3 +39,4 @@ required-features = ["editor_window"]
 [[example]]
 name = "observers"
 path = "examples/observers.rs"
+required-features = ["editor_window"]
