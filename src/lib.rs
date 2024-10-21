@@ -14,7 +14,7 @@ use std::{
     any::type_name,
     collections::BTreeMap,
     error::Error,
-    fs::File,
+    fs::{create_dir_all, File},
     io::Write,
     marker::PhantomData,
     path::{Path, PathBuf},
@@ -159,14 +159,14 @@ fn plugin_enabled(plugin_settings: Res<LogEventsPluginSettings>) -> bool {
 
 /// The [Resource] that contains the settings used to log a particular [Event].
 #[derive(Resource, Deref, DerefMut)]
-pub struct LoggedEventSettings<T: Event> {
+pub struct LoggedEventSettings<E> {
     /// The settings describing how the [Event] will be logged. See [EventSettings].
     #[deref]
     pub settings: EventSettings,
-    _phantom: PhantomData<T>,
+    _phantom: PhantomData<E>,
 }
 
-impl<T: Event> Default for LoggedEventSettings<T> {
+impl<E> Default for LoggedEventSettings<E> {
     fn default() -> Self {
         Self {
             settings: EventSettings::default(),
@@ -177,71 +177,71 @@ impl<T: Event> Default for LoggedEventSettings<T> {
 
 /// The Trait implemented on [App] that lets you log [Event].
 pub trait LogEvent {
-    /// Enable the logging for the [Event] `T`. This function add one system in charge of
+    /// Enable the logging for the [Event] `E`. This function add one system in charge of
     /// logging the [Event] inside the [LogEventsSet] and one system in [Startup]
     /// that will restore to the corresponding [LoggedEventSettings] the previous
     /// saved settings.
-    fn log_event<T>(&mut self) -> &mut Self
+    fn log_event<E>(&mut self) -> &mut Self
     where
-        T: Event + std::fmt::Debug;
+        E: Event + std::fmt::Debug;
 
     /// Lets you add and log an [Event] in one go. This is equivalent to :
     /// ```
-    /// app.add_event::<T>()
-    ///     .log_event::<T>()
+    /// app.add_event::<E>()
+    ///     .log_event::<E>()
     /// ```
-    fn add_and_log_event<T>(&mut self) -> &mut Self
+    fn add_and_log_event<E>(&mut self) -> &mut Self
     where
-        T: Event + std::fmt::Debug;
+        E: Event + std::fmt::Debug;
 }
 
 impl LogEvent for App {
-    fn log_event<T>(&mut self) -> &mut Self
+    fn log_event<E>(&mut self) -> &mut Self
     where
-        T: Event + std::fmt::Debug,
+        E: Event + std::fmt::Debug,
     {
-        self.insert_resource(LoggedEventSettings::<T>::default())
-            .add_systems(Startup, register_event::<T>)
-            .add_systems(Last, log_event::<T>.in_set(LogEventsSet))
+        self.insert_resource(LoggedEventSettings::<E>::default())
+            .add_systems(Startup, register_event::<E>)
+            .add_systems(Last, log_event::<E>.in_set(LogEventsSet))
     }
 
-    fn add_and_log_event<T>(&mut self) -> &mut Self
+    fn add_and_log_event<E>(&mut self) -> &mut Self
     where
-        T: Event + std::fmt::Debug,
+        E: Event + std::fmt::Debug,
     {
-        self.add_event::<T>().log_event::<T>()
+        self.add_event::<E>().log_event::<E>()
     }
 }
 
-fn register_event<T: Event>(world: &mut World) {
-    let name = type_name::<T>().to_string();
+fn register_event<E: Event>(world: &mut World) {
+    let name = type_name::<E>().to_string();
     world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
         if let Some(previous) = plugin_settings.previous_settings.get(&name) {
-            let mut event_settings = world.resource_mut::<LoggedEventSettings<T>>();
+            let mut event_settings = world.resource_mut::<LoggedEventSettings<E>>();
             **event_settings = *previous;
         }
     });
     world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
         let id = world
             .components()
-            .resource_id::<LoggedEventSettings<T>>()
+            .resource_id::<LoggedEventSettings<E>>()
             .unwrap();
         log_settings_ids.insert(name, id);
     });
 }
 
-fn log_event<T>(settings: Res<LoggedEventSettings<T>>, mut events: EventReader<T>)
+fn log_event<E>(settings: Res<LoggedEventSettings<E>>, mut events: EventReader<E>)
 where
-    T: Event + std::fmt::Debug,
+    E: Event + std::fmt::Debug,
 {
     if !settings.enabled {
         return;
     }
     for event in events.read() {
         let to_log = if settings.pretty {
-            format!("{}: {:#?}", type_name::<T>(), event)
+            format!("{}: {:#?}", type_name::<E>(), event)
         } else {
-            format!("{}: {:?}", type_name::<T>(), event)
+            format!("{}: {:?}", type_name::<E>(), event)
         };
         match settings.level {
             Level::ERROR => error!("{}", to_log),
@@ -266,16 +266,28 @@ fn save_settings(world: &mut World) {
         events_settings: all_settings,
     };
     let path = plugin_settings.saved_settings.clone();
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).unwrap();
+    if let Err(e) = serialize_settings(&path, to_serialize) {
+        error!(
+            "Could not save LogEventsPluginSettings at {:?} due to {:?}",
+            path, e
+        );
     }
-    let mut file = File::create(path).unwrap();
+}
+
+fn serialize_settings(
+    path: &PathBuf,
+    to_serialize: LoggedEventsSettings,
+) -> Result<(), Box<dyn Error>> {
+    if let Some(parent) = path.parent() {
+        create_dir_all(parent)?;
+    }
+    let mut file = File::create(path)?;
     let serialized = ron::ser::to_string_pretty(
         &to_serialize,
         PrettyConfig::default()
             .struct_names(true)
             .separate_tuple_members(true),
-    )
-    .unwrap();
-    file.write_all(serialized.as_bytes()).unwrap();
+    )?;
+    file.write_all(serialized.as_bytes())?;
+    Ok(())
 }
