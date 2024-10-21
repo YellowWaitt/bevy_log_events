@@ -227,7 +227,6 @@ impl LogEvent for App {
         ));
         self.insert_resource(LoggedEventSettings::<E>::default())
             .add_systems(Startup, register_event::<E>)
-            .add_systems(Last, log_event::<E>.in_set(LogEventsSet))
     }
 }
 
