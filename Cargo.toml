@@ -1,6 +1,6 @@
 [package]
 name = "bevy_log_events"
-version = "0.2.0"
+version = "0.3.0-dev"
 edition = "2021"
 description = "A Bevy plugin that log events"
 repository = "https://github.com/YellowWaitt/bevy_log_events"
@@ -24,6 +24,8 @@ serde = "1.0"
 [dev-dependencies]
 bevy = "0.14"
 bevy_editor_pls = "0.9"
+rand = "0.8.5"
+rand_chacha = "0.3.1"
 
 [[example]]
 name = "simple"
@@ -33,3 +35,7 @@ path = "examples/simple.rs"
 name = "window"
 path = "examples/window.rs"
 required-features = ["editor_window"]
+
+[[example]]
+name = "observers"
+path = "examples/observers.rs"
