@@ -7,8 +7,7 @@ use bevy_editor_pls::{
 use regex::Regex;
 
 use crate::{
-    utils::{get_log_settings_mut_by_id, level_to_string},
-    EventSettings, LogSettingsIds, LogEventsPluginSettings,
+    utils::get_log_settings_mut_by_id, EventSettings, LogEventsPluginSettings, LogSettingsIds,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -34,7 +33,7 @@ fn level_color(level: Level) -> egui::Color32 {
 }
 
 fn colored_text_level(level: Level) -> egui::RichText {
-    egui::RichText::new(level_to_string(level)).color(level_color(level))
+    egui::RichText::new(level.as_str()).color(level_color(level))
 }
 
 #[derive(Default, PartialEq, Clone, Copy)]

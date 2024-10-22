@@ -2,7 +2,7 @@
 name = "bevy_log_events"
 version = "0.3.0-dev"
 edition = "2021"
-description = "A Bevy plugin that log events"
+description = "A Bevy plugin that log events."
 repository = "https://github.com/YellowWaitt/bevy_log_events"
 license = "MIT OR Apache-2.0"
 keywords = ["bevy"]

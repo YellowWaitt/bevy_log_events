@@ -48,10 +48,13 @@ fn main() {
         .observe(on_remove_mine)
         .log_triggered::<Explode>()
         .log_triggered::<ExplodeMines>()
+        .log_trigger::<OnAdd, Mine>()
+        .log_trigger::<OnInsert, Mine>()
+        .log_trigger::<OnRemove, Mine>()
         .run();
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Mine {
     pos: Vec2,
     size: f32,
@@ -192,8 +195,10 @@ fn handle_click(
     mut commands: Commands,
 ) {
     let (camera, camera_transform) = camera.single();
-    if let Some(pos) = windows
-        .single()
+    let Some(window) = windows.iter().next() else {
+        return;
+    };
+    if let Some(pos) = window
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
         .map(|ray| ray.origin.truncate())

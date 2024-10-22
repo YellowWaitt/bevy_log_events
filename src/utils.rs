@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{any::type_name, collections::BTreeMap};
 
 use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
 
@@ -12,15 +12,11 @@ pub(crate) struct LoggedEventsSettings {
     pub events_settings: BTreeMap<String, EventSettings>,
 }
 
-pub(crate) fn level_to_string(level: Level) -> String {
-    format!("{}", level)
-}
-
 pub(crate) fn serialize_level<S>(level: &Level, s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
-    s.serialize_str(&level_to_string(*level))
+    s.serialize_str(level.as_str())
 }
 
 pub(crate) fn deserialize_level<'de, D>(d: D) -> Result<Level, D::Error>
@@ -39,6 +35,14 @@ where
             s
         ))),
     }
+}
+
+pub(crate) fn type_stem<'a, T>() -> &'a str {
+    type_name::<T>().split("::").last().unwrap()
+}
+
+pub(crate) fn trigger_name<E, C>() -> String {
+    format!("{}::{}", type_stem::<E>(), type_name::<C>())
 }
 
 pub(crate) fn get_log_settings_by_id<'a>(world: &'a World, id: &ComponentId) -> &'a EventSettings {

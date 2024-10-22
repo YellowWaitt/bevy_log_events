@@ -25,7 +25,10 @@ use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
 use ron::{de::from_reader, ser::PrettyConfig};
 use serde::{Deserialize, Serialize};
 
-use utils::{deserialize_level, get_log_settings_by_id, serialize_level, LoggedEventsSettings};
+use utils::{
+    deserialize_level, get_log_settings_by_id, serialize_level, trigger_name, type_stem,
+    LoggedEventsSettings,
+};
 
 /// Re-export of everything you need.
 pub mod prelude {
@@ -159,14 +162,14 @@ fn plugin_enabled(plugin_settings: Res<LogEventsPluginSettings>) -> bool {
 
 /// The [Resource] that contains the settings used to log a particular [Event].
 #[derive(Resource, Deref, DerefMut)]
-pub struct LoggedEventSettings<E> {
+pub struct LoggedEventSettings<E, C = ()> {
     /// The settings describing how the [Event] will be logged. See [EventSettings].
     #[deref]
     pub settings: EventSettings,
-    _phantom: PhantomData<E>,
+    _phantom: PhantomData<(E, C)>,
 }
 
-impl<E> Default for LoggedEventSettings<E> {
+impl<E, C> Default for LoggedEventSettings<E, C> {
     fn default() -> Self {
         Self {
             settings: EventSettings::default(),
@@ -197,6 +200,11 @@ pub trait LogEvent {
     fn log_triggered<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug;
+
+    fn log_trigger<E, C>(&mut self) -> &mut Self
+    where
+        E: Event,
+        C: Component + std::fmt::Debug;
 }
 
 impl LogEvent for App {
@@ -223,10 +231,24 @@ impl LogEvent for App {
         let observer = Observer::new(log_triggered::<E>);
         self.world_mut().spawn((
             observer,
-            Name::new(format!("LogObserver::<{}>", type_name::<E>())),
+            Name::new(format!("LogTriggered::<{}>", type_name::<E>())),
         ));
         self.insert_resource(LoggedEventSettings::<E>::default())
             .add_systems(Startup, register_event::<E>)
+    }
+
+    fn log_trigger<E, C>(&mut self) -> &mut Self
+    where
+        E: Event,
+        C: Component + std::fmt::Debug,
+    {
+        let observer = Observer::new(log_component::<E, C>);
+        self.world_mut().spawn((
+            observer,
+            Name::new(format!("Log{}::<{}>", type_stem::<E>(), type_name::<C>())),
+        ));
+        self.insert_resource(LoggedEventSettings::<E, C>::default())
+            .add_systems(Startup, register_component::<E, C>)
     }
 }
 
@@ -247,14 +269,31 @@ fn register_event<E: Event>(world: &mut World) {
     });
 }
 
-fn log<E>(settings: &LoggedEventSettings<E>, event: &E)
+fn register_component<E: Event, C: Component>(world: &mut World) {
+    let name = trigger_name::<E, C>();
+    world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
+        if let Some(previous) = plugin_settings.previous_settings.get(&name) {
+            let mut event_settings = world.resource_mut::<LoggedEventSettings<E, C>>();
+            **event_settings = *previous;
+        }
+    });
+    world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
+        let id = world
+            .components()
+            .resource_id::<LoggedEventSettings<E, C>>()
+            .unwrap();
+        log_settings_ids.insert(name, id);
+    });
+}
+
+fn log<T>(settings: &EventSettings, name: &str, object: &T)
 where
-    E: Event + std::fmt::Debug,
+    T: std::fmt::Debug,
 {
     let to_log = if settings.pretty {
-        format!("{}: {:#?}", type_name::<E>(), event)
+        format!("{}: {:#?}", name, object)
     } else {
-        format!("{}: {:?}", type_name::<E>(), event)
+        format!("{}: {:?}", name, object)
     };
     match settings.level {
         Level::ERROR => error!("{}", to_log),
@@ -273,7 +312,7 @@ where
         return;
     }
     for event in events.read() {
-        log(&settings, event);
+        log(&settings, type_name::<E>(), event);
     }
 }
 
@@ -288,7 +327,25 @@ fn log_triggered<E>(
         return;
     }
     let event = trigger.event();
-    log(&settings, event);
+    log(&settings, type_name::<E>(), event);
+}
+
+fn log_component<E, C>(
+    trigger: Trigger<E, C>,
+    plugin_settings: Res<LogEventsPluginSettings>,
+    settings: Res<LoggedEventSettings<E, C>>,
+    query: Query<&C>,
+) where
+    E: Event,
+    C: Component + std::fmt::Debug,
+{
+    if !plugin_settings.enabled || !settings.enabled {
+        return;
+    }
+    let entity = trigger.entity();
+    if let Ok(component) = query.get(entity) {
+        log(&settings, &trigger_name::<E, C>(), component);
+    }
 }
 
 fn save_settings(world: &mut World) {

@@ -1,6 +1,21 @@
 LoggedEventsSettings(
     plugin_enabled: true,
     events_settings: {
+        "OnAdd::observers::Mine": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "OnInsert::observers::Mine": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "OnRemove::observers::Mine": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
         "observers::Explode": EventSettings(
             enabled: true,
             pretty: true,
