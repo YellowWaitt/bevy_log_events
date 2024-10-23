@@ -1,6 +1,21 @@
 LoggedEventsSettings(
     plugin_enabled: true,
     events_settings: {
+        "OnAdd<window::plugins::MyComponent>": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "OnInsert<window::plugins::MyComponent>": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
+        "OnRemove<window::plugins::MyComponent>": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
         "bevy_app::app::AppExit": EventSettings(
             enabled: true,
             pretty: true,
@@ -47,7 +62,7 @@ LoggedEventsSettings(
             level: "DEBUG",
         ),
         "window::plugins::A": EventSettings(
-            enabled: false,
+            enabled: true,
             pretty: true,
             level: "INFO",
         ),
@@ -66,10 +81,15 @@ LoggedEventsSettings(
             pretty: true,
             level: "INFO",
         ),
-        "window::plugins::E": EventSettings(
-            enabled: false,
+        "window::plugins::Triggered": EventSettings(
+            enabled: true,
             pretty: true,
-            level: "INFO",
+            level: "WARN",
+        ),
+        "window::plugins::TriggeredAndSent": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "WARN",
         ),
         "window::plugins::bar::A": EventSettings(
             enabled: false,
@@ -97,11 +117,6 @@ LoggedEventsSettings(
             level: "INFO",
         ),
         "window::plugins::bar::F": EventSettings(
-            enabled: false,
-            pretty: true,
-            level: "INFO",
-        ),
-        "window::plugins::bar::G": EventSettings(
             enabled: false,
             pretty: true,
             level: "INFO",
@@ -136,11 +151,6 @@ LoggedEventsSettings(
             pretty: true,
             level: "INFO",
         ),
-        "window::plugins::baz::G": EventSettings(
-            enabled: false,
-            pretty: true,
-            level: "INFO",
-        ),
         "window::plugins::foo::A": EventSettings(
             enabled: false,
             pretty: true,
@@ -171,11 +181,6 @@ LoggedEventsSettings(
             pretty: true,
             level: "INFO",
         ),
-        "window::plugins::foo::G": EventSettings(
-            enabled: false,
-            pretty: true,
-            level: "INFO",
-        ),
         "window::plugins::qux::A": EventSettings(
             enabled: false,
             pretty: true,
@@ -202,11 +207,6 @@ LoggedEventsSettings(
             level: "INFO",
         ),
         "window::plugins::qux::F": EventSettings(
-            enabled: false,
-            pretty: true,
-            level: "INFO",
-        ),
-        "window::plugins::qux::G": EventSettings(
             enabled: false,
             pretty: true,
             level: "INFO",

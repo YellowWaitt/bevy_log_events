@@ -37,12 +37,12 @@ where
     }
 }
 
-pub(crate) fn type_stem<'a, T>() -> &'a str {
+fn type_stem<'a, T>() -> &'a str {
     type_name::<T>().split("::").last().unwrap()
 }
 
 pub(crate) fn trigger_name<E, C>() -> String {
-    format!("{}::{}", type_stem::<E>(), type_name::<C>())
+    format!("{}<{}>", type_stem::<E>(), type_name::<C>())
 }
 
 pub(crate) fn get_log_settings_by_id<'a>(world: &'a World, id: &ComponentId) -> &'a EventSettings {

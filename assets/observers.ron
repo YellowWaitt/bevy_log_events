@@ -1,17 +1,17 @@
 LoggedEventsSettings(
     plugin_enabled: true,
     events_settings: {
-        "OnAdd::observers::Mine": EventSettings(
+        "OnAdd<observers::Mine>": EventSettings(
             enabled: true,
             pretty: false,
             level: "INFO",
         ),
-        "OnInsert::observers::Mine": EventSettings(
+        "OnInsert<observers::Mine>": EventSettings(
             enabled: true,
             pretty: false,
             level: "INFO",
         ),
-        "OnRemove::observers::Mine": EventSettings(
+        "OnRemove<observers::Mine>": EventSettings(
             enabled: true,
             pretty: false,
             level: "INFO",

@@ -9,7 +9,6 @@ pub(super) fn plugin(app: &mut App) {
     add_event::<D>(app);
     add_event::<E>(app);
     add_event::<F>(app);
-    add_event::<G>(app);
 }
 
 #[derive(Event, Debug, Default)]
@@ -29,6 +28,3 @@ struct E;
 
 #[derive(Event, Debug, Default)]
 struct F;
-
-#[derive(Event, Debug, Default)]
-struct G;

@@ -26,8 +26,7 @@ use ron::{de::from_reader, ser::PrettyConfig};
 use serde::{Deserialize, Serialize};
 
 use utils::{
-    deserialize_level, get_log_settings_by_id, serialize_level, trigger_name, type_stem,
-    LoggedEventsSettings,
+    deserialize_level, get_log_settings_by_id, serialize_level, trigger_name, LoggedEventsSettings,
 };
 
 /// Re-export of everything you need.
@@ -231,7 +230,7 @@ impl LogEvent for App {
         let observer = Observer::new(log_triggered::<E>);
         self.world_mut().spawn((
             observer,
-            Name::new(format!("LogTriggered::<{}>", type_name::<E>())),
+            Name::new(format!("LogTrigger<{}>", type_name::<E>())),
         ));
         self.insert_resource(LoggedEventSettings::<E>::default())
             .add_systems(Startup, register_event::<E>)
@@ -245,7 +244,7 @@ impl LogEvent for App {
         let observer = Observer::new(log_component::<E, C>);
         self.world_mut().spawn((
             observer,
-            Name::new(format!("Log{}::<{}>", type_stem::<E>(), type_name::<C>())),
+            Name::new(format!("Log{}", trigger_name::<E, C>())),
         ));
         self.insert_resource(LoggedEventSettings::<E, C>::default())
             .add_systems(Startup, register_component::<E, C>)
@@ -363,8 +362,10 @@ fn save_settings(world: &mut World) {
     let path = plugin_settings.saved_settings.clone();
     if let Err(e) = serialize_settings(&path, to_serialize) {
         error!(
-            "Could not save LogEventsPluginSettings at {:?} due to {:?}",
-            path, e
+            "Could not save {} at {:?} due to {:?}",
+            type_name::<LoggedEventsSettings>(),
+            path,
+            e
         );
     }
 }
@@ -377,12 +378,8 @@ fn serialize_settings(
         create_dir_all(parent)?;
     }
     let mut file = File::create(path)?;
-    let serialized = ron::ser::to_string_pretty(
-        &to_serialize,
-        PrettyConfig::default()
-            .struct_names(true)
-            .separate_tuple_members(true),
-    )?;
+    let config = PrettyConfig::default().struct_names(true);
+    let serialized = ron::ser::to_string_pretty(&to_serialize, config)?;
     file.write_all(serialized.as_bytes())?;
     Ok(())
 }
