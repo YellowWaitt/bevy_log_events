@@ -48,7 +48,7 @@ fn trigger_and_send(mut commands: Commands, mut events: EventWriter<TriggeredAnd
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn((MyComponent { index: 0 }, MyEntity));
+    commands.spawn((Name::new("MyEntity"), MyComponent { index: 0 }, MyEntity));
 }
 
 fn modify_entity(

@@ -14,8 +14,8 @@ use std::{
     any::type_name,
     collections::BTreeMap,
     error::Error,
+    fmt::Write,
     fs::{create_dir_all, File},
-    io::Write,
     marker::PhantomData,
     path::{Path, PathBuf},
 };
@@ -285,22 +285,52 @@ fn register_component<E: Event, C: Component>(world: &mut World) {
     });
 }
 
-fn log<T>(settings: &EventSettings, name: &str, object: &T)
-where
-    T: std::fmt::Debug,
-{
-    let to_log = if settings.pretty {
-        format!("{}: {:#?}", name, object)
-    } else {
-        format!("{}: {:?}", name, object)
-    };
-    match settings.level {
+fn log(level: Level, to_log: &str) {
+    match level {
         Level::ERROR => error!("{}", to_log),
         Level::WARN => warn!("{}", to_log),
         Level::INFO => info!("{}", to_log),
         Level::DEBUG => debug!("{}", to_log),
         Level::TRACE => trace!("{}", to_log),
     }
+}
+
+fn format_and_log_event<E>(settings: &EventSettings, event: &E)
+where
+    E: std::fmt::Debug,
+{
+    let name = type_name::<E>();
+    let to_log = if settings.pretty {
+        format!("{}: {:#?}", name, event)
+    } else {
+        format!("{}: {:?}", name, event)
+    };
+    log(settings.level, &to_log);
+}
+
+fn format_entity_and_object<T>(
+    settings: &EventSettings,
+    event_name: &str,
+    entity_name: &Option<&Name>,
+    entity: Entity,
+    object: &T,
+) -> Result<String, Box<dyn Error>>
+where
+    T: std::fmt::Debug,
+{
+    let mut to_log = String::new();
+    to_log.write_fmt(format_args!("{} on ", event_name))?;
+    if let Some(name) = entity_name {
+        to_log.write_fmt(format_args!("{}({}): ", name, entity))?;
+    } else {
+        to_log.write_fmt(format_args!("{}: ", entity))?;
+    }
+    if settings.pretty {
+        to_log.write_fmt(format_args!("{:#?}", object))?;
+    } else {
+        to_log.write_fmt(format_args!("{:?}", object))?;
+    }
+    Ok(to_log)
 }
 
 fn log_event<E>(settings: Res<LoggedEventSettings<E>>, mut events: EventReader<E>)
@@ -311,7 +341,7 @@ where
         return;
     }
     for event in events.read() {
-        log(&settings, type_name::<E>(), event);
+        format_and_log_event(&settings, event);
     }
 }
 
@@ -319,21 +349,32 @@ fn log_triggered<E>(
     trigger: Trigger<E>,
     plugin_settings: Res<LogEventsPluginSettings>,
     settings: Res<LoggedEventSettings<E>>,
+    names: Query<&Name>,
 ) where
     E: Event + std::fmt::Debug,
 {
     if !plugin_settings.enabled || !settings.enabled {
         return;
     }
+    let entity = trigger.entity();
     let event = trigger.event();
-    log(&settings, type_name::<E>(), event);
+    if entity != Entity::PLACEHOLDER {
+        let name = names.get(entity).ok();
+        if let Ok(to_log) =
+            format_entity_and_object::<E>(&settings, type_name::<E>(), &name, entity, event)
+        {
+            log(settings.level, &to_log);
+        }
+    } else {
+        format_and_log_event(&settings, event);
+    }
 }
 
 fn log_component<E, C>(
     trigger: Trigger<E, C>,
     plugin_settings: Res<LogEventsPluginSettings>,
     settings: Res<LoggedEventSettings<E, C>>,
-    query: Query<&C>,
+    query: Query<(&C, Option<&Name>)>,
 ) where
     E: Event,
     C: Component + std::fmt::Debug,
@@ -342,8 +383,16 @@ fn log_component<E, C>(
         return;
     }
     let entity = trigger.entity();
-    if let Ok(component) = query.get(entity) {
-        log(&settings, &trigger_name::<E, C>(), component);
+    if let Ok((component, name)) = query.get(entity) {
+        if let Ok(to_log) = format_entity_and_object::<C>(
+            &settings,
+            &trigger_name::<E, C>(),
+            &name,
+            entity,
+            component,
+        ) {
+            log(settings.level, &to_log);
+        }
     }
 }
 
@@ -380,6 +429,6 @@ fn serialize_settings(
     let mut file = File::create(path)?;
     let config = PrettyConfig::default().struct_names(true);
     let serialized = ron::ser::to_string_pretty(&to_serialize, config)?;
-    file.write_all(serialized.as_bytes())?;
+    std::io::Write::write_all(&mut file, serialized.as_bytes())?;
     Ok(())
 }
