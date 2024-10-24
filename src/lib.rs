@@ -2,9 +2,9 @@
 
 //! [`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a
 //! [Bevy](https://bevyengine.org/) plugin that introduce
-//! the [add_and_log_event](LogEvent::add_and_log_event) function for Bevy's App.
-//! This plugin lets you log your Event while allowing you to configure independently
-//! how each Event are logged during program execution.
+//! the [LogEvent] trait for Bevy's App.
+//! It will helps you log your [Event] while allowing you to configure independently
+//! how each events are logged even during program execution.
 
 #[cfg(feature = "editor_window")]
 mod editor_window;
@@ -74,16 +74,16 @@ impl Plugin for LogEventsPlugin {
     }
 }
 
+#[derive(Resource, Default, Deref, DerefMut)]
+struct LogSettingsIds(BTreeMap<String, ComponentId>);
+
 /// The [SystemSet] were the [Event] will be logged.
 ///
 /// All the [Event] are logged inside the [Last] schedule at the end of each frame,
 /// one [Event] type at a time. So keep in mind that if many [Event] of differents
-/// type are sent in the same frame they will not be logged in the same order they are sent.
+/// type are sent in the same frame they may not be logged in the same order they were sent.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LogEventsSet;
-
-#[derive(Resource, Default, Deref, DerefMut)]
-struct LogSettingsIds(BTreeMap<String, ComponentId>);
 
 /// Common structure used to describe how the [Event] will be logged.
 ///
@@ -94,7 +94,7 @@ pub struct EventSettings {
     /// Whether the [Event] will be logged or not.
     pub enabled: bool,
     /// If true use the pretty-printing debug flag `{:#?}` to log the [Event].
-    /// Otherwise use the compact printing debug flag `{:?}`.
+    /// Otherwise use the compact-printing debug flag `{:?}`.
     pub pretty: bool,
     #[serde(
         serialize_with = "serialize_level",
@@ -177,29 +177,89 @@ impl<E, C> Default for LoggedEventSettings<E, C> {
     }
 }
 
-/// The Trait implemented on [App] that lets you log [Event].
+/// The Trait implemented on [App] that helps you log [Event].
+///
+/// In Bevy you can interact with events in two ways :
+/// 1. using [EventWriter] to send events and [EventReader] to read them.
+/// 2. using [Commands] to trigger events and [Observer] to react to the [Trigger].
+///
+/// This trait offers two complementary ways of interacting with events, depending on how they were emitted :
+/// 1. [log_event](LogEvent::log_event) and [add_and_log_event](LogEvent::add_and_log_event)
+///    will log [Event] sent with an [EventWriter].\
+///    These functions will not interact with triggered events.\
+///    These events will be logged with a delay at the end of each frame inside the [LogEventsSet].
+/// 2. [log_triggered](LogEvent::log_triggered) and [log_trigger](LogEvent::log_trigger)
+///    will log triggered [Event].\
+///    These functions will not interact with sent events.\
+///    These events will logged without a delay as soon as they are triggered.
+///
+/// As each one of these functions log events in independant situations you can use
+/// several of them at the same time for the same [Event], you will not get the same
+/// event log multiple times by doing that.
+///
+/// If an event `E` is registred with [log_event](LogEvent::log_event) and [log_triggered](LogEvent::log_triggered),
+/// it will share the same [LoggedEventSettings] resource for logging in both context.\
+/// In case of [log_trigger](LogEvent::log_trigger), you will get one [LoggedEventSettings] resource
+/// for each pair of event and component (`E`, `C`) you register.
 pub trait LogEvent {
-    /// Enable the logging for the [Event] `E`. This function add one system in charge of
-    /// logging the [Event] inside the [LogEventsSet] and one system in [Startup]
-    /// that will restore to the corresponding [LoggedEventSettings] the previous
-    /// saved settings.
+    /// This function add a system in the [Last] schedule inside the [LogEventsSet]
+    /// in charge of logging all the [Event] `E` sent with the corresponding [EventWriter].
     fn log_event<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug;
 
-    /// Lets you add and log an [Event] in one go. This is equivalent to :
+    /// Add and log an [Event] in one go. This is equivalent to :
     /// ```
     /// app.add_event::<E>()
-    ///     .log_event::<E>()
+    ///    .log_event::<E>()
     /// ```
     fn add_and_log_event<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug;
 
+    /// This function spawn an [Observer] that will log all triggered [Event] `E`.
+    /// If in addition the [Trigger] targets an [Entity], it will also log the entity
+    /// id and its [Name] if any.
+    ///
+    /// As an example:
+    /// ```
+    /// // If you log triggered events MyEvent
+    /// app.log_triggered::<MyEvent>();
+    ///
+    /// // This will log MyEvent
+    /// commands.trigger(MyEvent);
+    /// // This will log MyEvent and the entity id
+    /// commands.trigger_targets(MyEvent, entity);
+    /// ```
     fn log_triggered<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug;
 
+    /// This function spawn an [Observer] that react when an event [Event] `E` is triggered.
+    /// If the [Trigger] targets an [Entity] `e`, it will fetch the [Component] `C` associated
+    /// to `e` and log it with the entity id and its [Name] if any.
+    ///
+    /// This will not log the content of the triggered event. If you want to log the event use
+    /// [log_triggered](LogEvent::log_triggered).
+    ///
+    /// This was designed with [OnAdd], [OnInsert] and [OnRemove] in mind but you can use
+    /// it with your own events too.
+    ///
+    /// As an example :
+    /// ```
+    /// // If you log MyComponent when MyEvent is triggered
+    /// app.log_trigger::<MyEvent, MyComponent>();
+    ///
+    /// // This will log nothing
+    /// commands.trigger(MyEvent);
+    /// // If the entity has a MyComponent component it will
+    /// // log the entity id and its associated MyComponent
+    /// commands.trigger_targets(MyEvent, entity);
+    ///
+    /// // With this everytime MyComponent is added to an entity it
+    /// // will log MyComponent and the entity id it was added to
+    /// app.log_trigger::<OnAdd, MyComponent>();
+    /// ```
     fn log_trigger<E, C>(&mut self) -> &mut Self
     where
         E: Event,
