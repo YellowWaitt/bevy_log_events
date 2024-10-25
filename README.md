@@ -105,13 +105,13 @@ This feature if removed will entirely disable the `LogEventsPlugin` and the func
 To remove it you can setup your `Cargo.toml` as this :
 ```toml
 [features]
-// Create a feature to state that the crate is enabled
+# Create a feature to state that the crate is enabled
 dev = ["bevy_log_events/enabled"]
-// You may want to set that feature as default
+# You may want to set that feature as default
 default = ["dev"]
 
 [dependencies]
-// Declare that you do not want default-feautres in your dependencies
+# Declare that you do not want default-feautres in your dependencies
 bevy_log_events = { version = "0.3", default-features = false }
 ```
 
