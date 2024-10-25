@@ -8,7 +8,7 @@ LoggedEventsSettings(
         ),
         "simple::MyEvent": EventSettings(
             enabled: true,
-            pretty: true,
+            pretty: false,
             level: "INFO",
         ),
     },

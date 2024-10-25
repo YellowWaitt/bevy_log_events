@@ -7,7 +7,8 @@ use bevy_editor_pls::{
 use regex::Regex;
 
 use crate::{
-    utils::get_log_settings_mut_by_id, EventSettings, LogEventsPluginSettings, LogSettingsIds,
+    systems::LogSettingsIds, utils::get_log_settings_mut_by_id, EventSettings,
+    LogEventsPluginSettings,
 };
 
 pub(super) fn plugin(app: &mut App) {

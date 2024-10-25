@@ -844,7 +844,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_log_events"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "bevy",
  "bevy_editor_pls",
