@@ -8,7 +8,11 @@
 
 #[cfg(feature = "enabled")]
 #[cfg(feature = "editor_window")]
-mod editor_window;
+compile_error!(
+    "The \"editor_window\" feature is not yet available for Bevy 0.15.
+It will be made available again when the \"bevy_editor_pls\" has been updated to Bevy 0.15."
+);
+// mod editor_window;
 #[cfg(feature = "enabled")]
 mod systems;
 #[cfg(feature = "enabled")]
@@ -18,7 +22,7 @@ mod utils;
 use std::{any::type_name, collections::BTreeMap};
 use std::{marker::PhantomData, path::PathBuf};
 
-use bevy::{log::Level, prelude::*};
+use bevy::{log::Level, prelude::*, state::state::FreelyMutableState};
 
 #[cfg(feature = "enabled")]
 use serde::{Deserialize, Serialize};
@@ -153,8 +157,9 @@ impl<E, C> Default for LoggedEventSettings<E, C> {
 /// 2. using [Commands] to trigger events and [Observer] to react to the [Trigger].
 ///
 /// This trait offers two complementary ways of interacting with events, depending on how they were emitted :
-/// 1. [log_event](LogEvent::log_event) and [add_and_log_event](LogEvent::add_and_log_event)
-///    will log [Event] sent with an [EventWriter].<br>
+/// 1. [log_event](LogEvent::log_event), [add_and_log_event](LogEvent::add_and_log_event) and
+///    [add_and_log_state_scoped_event](LogEvent::add_and_log_state_scoped_event) will
+///    log [Event] sent with an [EventWriter].<br>
 ///    These functions will not interact with triggered events.<br>
 ///    These events will be logged with a delay at the end of each frame inside the [LogEventsSet].
 /// 2. [log_triggered](LogEvent::log_triggered) and [log_trigger](LogEvent::log_trigger)
@@ -186,6 +191,16 @@ pub trait LogEvent {
     where
         E: Event + std::fmt::Debug;
 
+    /// Add and log a state scoped [Event] in one go. This is equivalent to :
+    /// ```
+    /// app.add_state_scoped_event::<E>(state)
+    ///    .log_event::<E>()
+    /// ```
+    /// See [add_state_scoped_event](StateScopedEventsAppExt::add_state_scoped_event) for details.
+    fn add_and_log_state_scoped_event<E>(&mut self, state: impl FreelyMutableState) -> &mut Self
+    where
+        E: Event + std::fmt::Debug;
+
     /// This function spawn an [Observer] that will log all triggered [Event] `E`.
     /// If in addition the [Trigger] targets an [Entity], it will also log the entity
     /// id and its [Name] if any.
@@ -211,7 +226,7 @@ pub trait LogEvent {
     /// This will not log the content of the triggered event. If you want to log the event use
     /// [log_triggered](LogEvent::log_triggered).
     ///
-    /// This was designed with [OnAdd], [OnInsert] and [OnRemove] in mind but you can use
+    /// This was designed with [OnAdd], [OnInsert], [OnRemove] and [OnReplace] in mind but you can use
     /// it with your own events too.
     ///
     /// As an example :
@@ -242,9 +257,16 @@ impl LogEvent for App {
     {
         #[cfg(feature = "enabled")]
         {
-            self.insert_resource(LoggedEventSettings::<E>::default())
-                .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet))
-                .add_systems(Last, log_event::<E>.in_set(LogEventsSet));
+            if !self.world().contains_resource::<LoggedEventSettings<E>>() {
+                self.insert_resource(LoggedEventSettings::<E>::default())
+                    .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet))
+                    .add_systems(Last, log_event::<E>.in_set(LogEventsSet));
+            } else {
+                warn!(
+                    "You tried to use log_event twice for the event \"{}\"",
+                    type_name::<E>()
+                );
+            }
         }
         self
     }
@@ -256,19 +278,33 @@ impl LogEvent for App {
         self.add_event::<E>().log_event::<E>()
     }
 
+    fn add_and_log_state_scoped_event<E>(&mut self, state: impl FreelyMutableState) -> &mut Self
+    where
+        E: Event + std::fmt::Debug,
+    {
+        self.add_state_scoped_event::<E>(state).log_event::<E>()
+    }
+
     fn log_triggered<E>(&mut self) -> &mut Self
     where
         E: Event + std::fmt::Debug,
     {
         #[cfg(feature = "enabled")]
         {
-            let observer = Observer::new(log_triggered::<E>);
-            self.world_mut().spawn((
-                observer,
-                Name::new(format!("LogTrigger<{}>", type_name::<E>())),
-            ));
-            self.insert_resource(LoggedEventSettings::<E>::default())
-                .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet));
+            if !self.world().contains_resource::<LoggedEventSettings<E>>() {
+                let observer = Observer::new(log_triggered::<E>);
+                self.world_mut().spawn((
+                    observer,
+                    Name::new(format!("LogTrigger<{}>", type_name::<E>())),
+                ));
+                self.insert_resource(LoggedEventSettings::<E>::default())
+                    .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet));
+            } else {
+                warn!(
+                    "You tried to use log_triggered twice for the event \"{}\"",
+                    type_name::<E>()
+                );
+            }
         }
         self
     }
@@ -280,16 +316,26 @@ impl LogEvent for App {
     {
         #[cfg(feature = "enabled")]
         {
-            let observer = Observer::new(log_component::<E, C>);
-            self.world_mut().spawn((
-                observer,
-                Name::new(format!("Log{}", trigger_name::<E, C>())),
-            ));
-            self.insert_resource(LoggedEventSettings::<E, C>::default())
-                .add_systems(
-                    Startup,
-                    register_component::<E, C>.in_set(RegisterEventsSet),
+            if !self
+                .world()
+                .contains_resource::<LoggedEventSettings<E, C>>()
+            {
+                let observer = Observer::new(log_component::<E, C>);
+                self.world_mut().spawn((
+                    observer,
+                    Name::new(format!("Log{}", trigger_name::<E, C>())),
+                ));
+                self.insert_resource(LoggedEventSettings::<E, C>::default())
+                    .add_systems(
+                        Startup,
+                        register_component::<E, C>.in_set(RegisterEventsSet),
+                    );
+            } else {
+                warn!(
+                    "You tried to use log_trigger twice for the trigger \"{}\"",
+                    trigger_name::<E, C>()
                 );
+            }
         }
         self
     }

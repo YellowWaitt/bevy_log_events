@@ -1,8 +1,8 @@
 [package]
 name = "bevy_log_events"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
-description = "A Bevy plugin that log events."
+description = "A Bevy plugin that helps to log events."
 repository = "https://github.com/YellowWaitt/bevy_log_events"
 license = "MIT OR Apache-2.0"
 keywords = ["bevy", "log"]
@@ -16,15 +16,15 @@ enabled = ["dep:ron", "dep:serde"]
 editor_window = ["dep:bevy_editor_pls", "dep:regex"]
 
 [dependencies]
-bevy = { version = "0.14", default-features = false }
+bevy = { version = "0.15", default-features = false, features = ["bevy_state"] }
 bevy_editor_pls = { version = "0.9", optional = true }
 regex = { version = "1", optional = true }
 ron = { version = "0.8", optional = true }
 serde = { version = "1", optional = true }
 
 [dev-dependencies]
-bevy = "0.14"
-bevy_editor_pls = "0.9"
+bevy = "0.15"
+# bevy_editor_pls = "0.9"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 
@@ -35,9 +35,9 @@ path = "examples/simple.rs"
 [[example]]
 name = "window"
 path = "examples/window.rs"
-required-features = ["editor_window"]
+# required-features = ["editor_window"]
 
 [[example]]
 name = "observers"
 path = "examples/observers.rs"
-required-features = ["editor_window"]
+# required-features = ["editor_window"]

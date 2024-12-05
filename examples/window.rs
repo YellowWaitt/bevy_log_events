@@ -5,14 +5,14 @@ use bevy::{
     prelude::*,
     window::{AppLifecycle, WindowClosed, WindowCreated, WindowResized},
 };
-use bevy_editor_pls::EditorPlugin;
+// use bevy_editor_pls::EditorPlugin;
 use bevy_log_events::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            EditorPlugin::default(),
+            // EditorPlugin::default(),
             LogEventsPlugin::new("assets/window.ron"),
             plugins::plugin,
         ))
@@ -30,9 +30,9 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
-    commands.spawn(SpriteBundle {
-        texture: asset_server.load("bevy_icon.png"),
+    commands.spawn(Camera2d);
+    commands.spawn(Sprite {
+        image: asset_server.load("bevy_icon.png"),
         ..default()
     });
 }

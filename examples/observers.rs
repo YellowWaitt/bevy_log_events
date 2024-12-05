@@ -4,17 +4,16 @@ use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
+// use bevy_editor_pls::EditorPlugin;
+use bevy_log_events::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
-
-use bevy_editor_pls::EditorPlugin;
-use bevy_log_events::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            EditorPlugin::default(),
+            // EditorPlugin::default(),
             LogEventsPlugin::new("assets/observers.ron"),
         ))
         .init_resource::<SpatialIndex>()
@@ -22,7 +21,7 @@ fn main() {
         .add_systems(Update, (draw_shapes, handle_click))
         // Observers are systems that run when an event is "triggered". This observer runs whenever
         // `ExplodeMines` is triggered.
-        .observe(
+        .add_observer(
             |trigger: Trigger<ExplodeMines>,
              mines: Query<&Mine>,
              index: Res<SpatialIndex>,
@@ -42,19 +41,20 @@ fn main() {
             },
         )
         // This observer runs whenever the `Mine` component is added to an entity, and places it in a simple spatial index.
-        .observe(on_add_mine)
+        .add_observer(on_add_mine)
         // This observer runs whenever the `Mine` component is removed from an entity (including despawning it)
         // and removes it from the spatial index.
-        .observe(on_remove_mine)
+        .add_observer(on_remove_mine)
         .log_triggered::<Explode>()
         .log_triggered::<ExplodeMines>()
         .log_trigger::<OnAdd, Mine>()
         .log_trigger::<OnInsert, Mine>()
         .log_trigger::<OnRemove, Mine>()
+        .log_trigger::<OnReplace, Mine>()
         .run();
 }
 
-#[derive(Component, Debug)]
+#[derive(Debug, Component)]
 struct Mine {
     pos: Vec2,
     size: f32,
@@ -72,36 +72,29 @@ impl Mine {
     }
 }
 
-#[derive(Event, Debug)]
+#[derive(Debug, Event)]
 struct ExplodeMines {
     pos: Vec2,
     radius: f32,
 }
 
-#[derive(Event, Debug)]
+#[derive(Debug, Event)]
 struct Explode;
 
-#[derive(Component)]
-struct MainCamera;
-
 fn setup(mut commands: Commands) {
-    commands.spawn((Camera2dBundle::default(), MainCamera));
-    commands.spawn(
-        TextBundle::from_section(
+    commands.spawn(Camera2d);
+    commands.spawn((
+        Text::new(
             "Click on a \"Mine\" to trigger it.\n\
             When it explodes it will trigger all overlapping mines.",
-            TextStyle {
-                color: Color::WHITE,
-                ..default()
-            },
-        )
-        .with_style(Style {
+        ),
+        Node {
             position_type: PositionType::Absolute,
             top: Val::Px(12.),
             left: Val::Px(12.),
             ..default()
-        }),
-    );
+        },
+    ));
 
     let mut rng = ChaCha8Rng::seed_from_u64(19878367467713);
 
@@ -190,17 +183,14 @@ fn draw_shapes(mut gizmos: Gizmos, mines: Query<&Mine>) {
 // Trigger `ExplodeMines` at the position of a given click
 fn handle_click(
     mouse_button_input: Res<ButtonInput<MouseButton>>,
-    camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    windows: Query<&Window>,
+    camera: Single<(&Camera, &GlobalTransform)>,
+    windows: Single<&Window>,
     mut commands: Commands,
 ) {
-    let (camera, camera_transform) = camera.single();
-    let Some(window) = windows.iter().next() else {
-        return;
-    };
-    if let Some(pos) = window
+    let (camera, camera_transform) = *camera;
+    if let Some(pos) = windows
         .cursor_position()
-        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+        .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     {
         if mouse_button_input.just_pressed(MouseButton::Left) {

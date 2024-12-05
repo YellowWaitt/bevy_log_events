@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0
+
+### Added
+
+- The `add_and_log_state_scoped_event` functions to the `LogEvent` trait.
+
+### Changed
+
+- Updated `bevy` version to 0.15.
+- Temporarily removed the `editor_window` feature waiting for the `bevy_editor_pls` update.
+- The functions of the `LogEvent` trait now check if they were already used for the
+  same events, preventing events to be logged twice.
+
 ## 0.3.0
 
 ### Added
@@ -22,4 +35,4 @@
 
 ## 0.1.0
 
-Initial release
+Initial release.

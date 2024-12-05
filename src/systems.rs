@@ -24,11 +24,11 @@ impl Plugin for LogEventsPlugin {
         app.insert_resource(LogEventsPluginSettings::new(self))
             .insert_resource(LogSettingsIds::default())
             .configure_sets(Last, LogEventsSet.run_if(plugin_enabled))
-            .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>()));
-        #[cfg(feature = "editor_window")]
-        {
-            app.add_plugins(crate::editor_window::plugin);
-        }
+            .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>));
+        // #[cfg(feature = "editor_window")]
+        // {
+        //     app.add_plugins(crate::editor_window::plugin);
+        // }
     }
 }
 

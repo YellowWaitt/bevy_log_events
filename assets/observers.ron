@@ -16,6 +16,11 @@ LoggedEventsSettings(
             pretty: false,
             level: "INFO",
         ),
+        "OnReplace<observers::Mine>": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
         "observers::Explode": EventSettings(
             enabled: true,
             pretty: true,
