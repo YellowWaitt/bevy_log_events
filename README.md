@@ -13,7 +13,7 @@
 - Easily log your events by adding a single line of code for each of them.
 - You can configure independently how each events will be logged using the `LoggedEventSettings<E>` resources.
 - Your settings are saved when you exit your application and reloaded the next time you launch it.
-- Using [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) and the `editor_window` feature, you can use a window to edit the settings for all your logged events :
+- You can use a window to easily edit the settings for all your logged events :
 
 ![](assets/editor_window.png)
 
@@ -81,28 +81,23 @@ To run the minimal example from above :
 cargo run --example simple
 ```
 
-To run an example with more events and the [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) window use :
+To run an example with more events and to see how to use the settings editor window :
 ```
-cargo run --example window --features editor_window
+cargo run --example window
 ```
 
 To see a more complete example with triggered events check the copy of the official bevy example of observers :
 ```
-cargo run --example observers --features editor_window
+cargo run --example observers
 ```
 
 ## Cargo Features
-
-### editor_window
-
-This feature add an editor window that you can use to edit the `LoggedEventSettings<E>` resources for all the events you have registered.<br>
-To use it you will need to add the [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) as a dependecy of your project and add the `EditorPlugin` to your app before the `LogEventsPlugin`.
 
 ### enabled
 
 This feature if removed will entirely disable the `LogEventsPlugin` and the functions from the `LogEvent` trait to make them do nothing. No systems will be added, no resources will be inserted and no logging will occur.
 
-To remove it you can setup your `Cargo.toml` as this :
+To remove it you can setup your `Cargo.toml` as follow :
 ```toml
 [features]
 # Create a feature to state that the crate is enabled
@@ -112,7 +107,7 @@ default = ["dev"]
 
 [dependencies]
 # Declare that you do not want default-feautres in your dependencies
-bevy_log_events = { version = "0.3", default-features = false }
+bevy_log_events = { version = "0.4.1", default-features = false }
 ```
 
 Then you can run your program as follow :
@@ -122,6 +117,11 @@ cargo run --features dev
 // Otherwise run your program without default features
 cargo run --no-default-features
 ```
+
+<!-- ### editor_window
+
+This feature add an editor window that you can use to edit the `LoggedEventSettings<E>` resources for all the events you have registered.<br>
+To use it you will need to add the [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) as a dependecy of your project and add the `EditorPlugin` to your app before the `LogEventsPlugin`. -->
 
 ## Note
 

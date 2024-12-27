@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1
+
+### Added
+
+- The `show_window` bool field to the `LogEventsPluginSettings` struct.
+
+### Changed
+
+- The `LogEventsPlugin` now directly rely on [`bevy_egui`](https://github.com/vladbat00/bevy_egui) instead of [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) to show the `LoggedEventSettings` editor window. The `EguiPlugin` will be added for you if it has not already been.
+
 ## 0.4.0
 
 ### Added

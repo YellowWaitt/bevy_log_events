@@ -128,6 +128,7 @@ impl Default for EventSettings {
 pub struct LogEventsPluginSettings {
     /// If false no [Event] will be logged.
     pub enabled: bool,
+    /// Whether to show or not the window to configure the [LoggedEventSettings].
     pub show_window: bool,
     #[cfg(feature = "enabled")]
     saved_settings: PathBuf,
