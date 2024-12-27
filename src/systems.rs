@@ -24,7 +24,8 @@ impl Plugin for LogEventsPlugin {
         app.insert_resource(LogEventsPluginSettings::new(self))
             .insert_resource(LogSettingsIds::default())
             .configure_sets(Last, LogEventsSet.run_if(plugin_enabled))
-            .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>));
+            .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>))
+            .add_plugins(crate::settings_window::plugin);
         // #[cfg(feature = "editor_window")]
         // {
         //     app.add_plugins(crate::editor_window::plugin);
@@ -47,6 +48,7 @@ impl LogEventsPluginSettings {
     fn default(path: &Path) -> Self {
         Self {
             enabled: true,
+            show_window: false,
             saved_settings: path.to_path_buf(),
             previous_settings: BTreeMap::new(),
         }
@@ -57,6 +59,7 @@ impl LogEventsPluginSettings {
         let saved_settings: LoggedEventsSettings = from_reader(file)?;
         let new = Self {
             enabled: saved_settings.plugin_enabled,
+            show_window: false,
             saved_settings: path.to_path_buf(),
             previous_settings: saved_settings.events_settings,
         };

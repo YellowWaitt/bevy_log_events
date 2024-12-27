@@ -10,9 +10,11 @@
 #[cfg(feature = "editor_window")]
 compile_error!(
     "The \"editor_window\" feature is not yet available for Bevy 0.15.
-It will be made available again when the \"bevy_editor_pls\" has been updated to Bevy 0.15."
+It will be made available again when the \"bevy_editor_pls\" will be updated to Bevy 0.15."
 );
 // mod editor_window;
+#[cfg(feature = "enabled")]
+mod settings_window;
 #[cfg(feature = "enabled")]
 mod systems;
 #[cfg(feature = "enabled")]
@@ -126,6 +128,7 @@ impl Default for EventSettings {
 pub struct LogEventsPluginSettings {
     /// If false no [Event] will be logged.
     pub enabled: bool,
+    pub show_window: bool,
     #[cfg(feature = "enabled")]
     saved_settings: PathBuf,
     #[cfg(feature = "enabled")]

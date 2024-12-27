@@ -5,14 +5,12 @@ use bevy::{
     prelude::*,
     window::{AppLifecycle, WindowClosed, WindowCreated, WindowResized},
 };
-// use bevy_editor_pls::EditorPlugin;
 use bevy_log_events::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            // EditorPlugin::default(),
             LogEventsPlugin::new("assets/window.ron"),
             plugins::plugin,
         ))
@@ -26,6 +24,7 @@ fn main() {
         .log_event::<AppLifecycle>()
         .log_event::<AppExit>()
         .add_systems(Startup, setup)
+        .add_systems(Update, toggle_window)
         .run();
 }
 
@@ -35,4 +34,22 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         image: asset_server.load("bevy_icon.png"),
         ..default()
     });
+    commands.spawn(Node::default()).with_children(|builder| {
+        builder.spawn((
+            Text::new("Press Space to toggle the settings window"),
+            TextFont {
+                font_size: 20.0,
+                ..default()
+            },
+        ));
+    });
+}
+
+fn toggle_window(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut pluggin_settings: ResMut<LogEventsPluginSettings>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        pluggin_settings.show_window = !pluggin_settings.show_window;
+    }
 }

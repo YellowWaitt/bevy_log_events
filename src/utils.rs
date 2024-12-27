@@ -50,7 +50,6 @@ pub(crate) fn get_log_settings_by_id<'a>(world: &'a World, id: &ComponentId) -> 
     unsafe { ptr.deref::<EventSettings>() }
 }
 
-#[cfg(feature = "editor_window")]
 pub(crate) fn get_log_settings_mut_by_id<'a>(
     world: &'a mut World,
     id: &ComponentId,

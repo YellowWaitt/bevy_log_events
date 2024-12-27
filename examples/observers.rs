@@ -4,18 +4,13 @@ use bevy::{
     prelude::*,
     utils::{HashMap, HashSet},
 };
-// use bevy_editor_pls::EditorPlugin;
 use bevy_log_events::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            // EditorPlugin::default(),
-            LogEventsPlugin::new("assets/observers.ron"),
-        ))
+        .add_plugins((DefaultPlugins, LogEventsPlugin::new("assets/observers.ron")))
         .init_resource::<SpatialIndex>()
         .add_systems(Startup, setup)
         .add_systems(Update, (draw_shapes, handle_click))
@@ -51,7 +46,17 @@ fn main() {
         .log_trigger::<OnInsert, Mine>()
         .log_trigger::<OnRemove, Mine>()
         .log_trigger::<OnReplace, Mine>()
+        .add_systems(Update, toggle_window)
         .run();
+}
+
+fn toggle_window(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut pluggin_settings: ResMut<LogEventsPluginSettings>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        pluggin_settings.show_window = !pluggin_settings.show_window;
+    }
 }
 
 #[derive(Debug, Component)]
