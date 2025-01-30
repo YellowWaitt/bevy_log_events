@@ -19,14 +19,11 @@ pub(super) fn plugin(app: &mut App) {
     add_event::<A>(app);
     add_event::<B>(app);
     add_event::<C>(app);
-    add_event::<D>(app);
     app.add_plugins((bar::plugin, foo::plugin, baz::plugin, qux::plugin))
         .add_and_log_event::<TriggeredAndSent>()
         .log_triggered::<TriggeredAndSent>()
         .log_triggered::<Triggered>()
-        .log_trigger::<OnAdd, MyComponent>()
-        .log_trigger::<OnInsert, MyComponent>()
-        .log_trigger::<OnRemove, MyComponent>()
+        .log_component_hooks::<MyComponent>()
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -75,9 +72,6 @@ struct B;
 
 #[derive(Event, Debug, Default)]
 struct C;
-
-#[derive(Event, Debug, Default)]
-struct D;
 
 #[derive(Event, Debug)]
 struct Triggered;

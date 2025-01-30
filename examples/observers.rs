@@ -42,10 +42,7 @@ fn main() {
         .add_observer(on_remove_mine)
         .log_triggered::<Explode>()
         .log_triggered::<ExplodeMines>()
-        .log_trigger::<OnAdd, Mine>()
-        .log_trigger::<OnInsert, Mine>()
-        .log_trigger::<OnRemove, Mine>()
-        .log_trigger::<OnReplace, Mine>()
+        .log_component_hooks::<Mine>()
         .add_systems(Update, toggle_window)
         .run();
 }

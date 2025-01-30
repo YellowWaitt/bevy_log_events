@@ -252,6 +252,24 @@ pub trait LogEvent {
     where
         E: Event,
         C: Component + std::fmt::Debug;
+
+    /// Log all the [ComponentHooks](bevy::ecs::component::ComponentHooks)
+    /// for the given component. This is equivalent to :
+    /// ```
+    /// app.log_trigger::<OnAdd, C>()
+    ///    .log_trigger::<OnInsert, C>()
+    ///    .log_trigger::<OnReplace, C>()
+    ///    .log_trigger::<OnRemove, C>()
+    /// ```
+    fn log_component_hooks<C>(&mut self) -> &mut Self
+    where
+        C: Component + std::fmt::Debug,
+    {
+        self.log_trigger::<OnAdd, C>()
+            .log_trigger::<OnInsert, C>()
+            .log_trigger::<OnReplace, C>()
+            .log_trigger::<OnRemove, C>()
+    }
 }
 
 impl LogEvent for App {
