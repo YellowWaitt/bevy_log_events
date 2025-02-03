@@ -4,6 +4,7 @@ use std::{
     error::Error,
     fmt::Write,
     fs::{create_dir_all, File},
+    ops::DerefMut,
     path::{Path, PathBuf},
 };
 
@@ -15,9 +16,6 @@ use crate::{
     utils::{get_log_settings_by_id, trigger_name, LoggedEventsSettings},
     EventSettings, LogEventsPlugin, LogEventsPluginSettings, LogEventsSet, LoggedEventSettings,
 };
-
-#[derive(Resource, Default, Deref, DerefMut)]
-pub(crate) struct LogSettingsIds(BTreeMap<String, ComponentId>);
 
 impl Plugin for LogEventsPlugin {
     fn build(&self, app: &mut App) {
@@ -71,21 +69,54 @@ fn plugin_enabled(plugin_settings: Res<LogEventsPluginSettings>) -> bool {
     plugin_settings.enabled
 }
 
-pub(crate) fn register_event<T>(world: &mut World, name: String)
+bitflags! {
+    #[derive(Clone, Copy)]
+    pub(crate) struct EventKind: u8 {
+        const EVENT = 1;
+        const TRIGGER = 1 << 1;
+    }
+}
+
+#[derive(Resource, Default, Deref, DerefMut)]
+pub(crate) struct LogSettingsIds(BTreeMap<String, (ComponentId, EventKind)>);
+
+impl LogSettingsIds {
+    fn registered(&self, name: &str, kind: EventKind) -> bool {
+        self.get(name).is_some_and(|entry| entry.1.contains(kind))
+    }
+
+    fn register(&mut self, name: String, id: ComponentId, kind: EventKind) {
+        if let Some(entry) = self.get_mut(&name) {
+            entry.1.insert(kind);
+        } else {
+            self.insert(name, (id, kind));
+        }
+    }
+    pub(crate) fn iter_ids(&self) -> impl Iterator<Item = (&String, &ComponentId)> {
+        self.iter().map(|(name, (id, _))| (name, id))
+    }
+}
+
+pub(crate) fn register_event<T>(world: &mut World, name: String, kind: EventKind) -> bool
 where
     T: Resource + Default + DerefMut<Target = EventSettings>,
 {
-    world.insert_resource(T::default());
-    world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
-        if let Some(previous) = plugin_settings.previous_settings.get(&name) {
-            let mut event_settings = world.resource_mut::<T>();
-            **event_settings = *previous;
-        }
-    });
     world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
-        let id = world.components().resource_id::<T>().unwrap();
-        log_settings_ids.insert(name, id);
-    });
+        if log_settings_ids.registered(&name, kind) {
+            false
+        } else {
+            world.insert_resource(T::default());
+            world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
+                if let Some(previous) = plugin_settings.previous_settings.get(&name) {
+                    let mut event_settings = world.resource_mut::<T>();
+                    **event_settings = *previous;
+                }
+            });
+            let id = world.components().resource_id::<T>().unwrap();
+            log_settings_ids.register(name, id, kind);
+            true
+        }
+    })
 }
 
 fn log(level: Level, to_log: &str) {
@@ -216,7 +247,7 @@ fn serialize_settings(
 fn save_settings(world: &mut World) {
     let log_settings_ids = world.resource::<LogSettingsIds>();
     let mut all_settings = BTreeMap::new();
-    for (name, id) in log_settings_ids.iter() {
+    for (name, id) in log_settings_ids.iter_ids() {
         let event_settings = get_log_settings_by_id(world, id);
         all_settings.insert(name.clone(), *event_settings);
     }

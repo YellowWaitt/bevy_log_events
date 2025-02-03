@@ -214,7 +214,7 @@ pub fn log_events_window_ui(world: &mut World, ui: &mut egui::Ui) {
                 .auto_shrink(true)
                 .show(ui, |ui| {
                     state.shown = 0;
-                    for (name, id) in log_settings_ids.iter() {
+                    for (name, id) in log_settings_ids.iter_ids() {
                         if !state.name_contains_filter(name) {
                             continue;
                         }

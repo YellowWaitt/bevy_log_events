@@ -30,7 +30,7 @@ use bevy::{log::Level, prelude::*, state::state::FreelyMutableState};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "enabled")]
-use systems::{log_component, log_event, log_triggered, register_event};
+use systems::{log_component, log_event, log_triggered, register_event, EventKind};
 #[cfg(feature = "enabled")]
 use utils::{deserialize_level, serialize_level, trigger_name};
 
@@ -285,9 +285,12 @@ impl LogEvent for App {
         #[cfg(feature = "enabled")]
         {
             let name = type_name::<E>();
-            if !self.world().contains_resource::<LoggedEventSettings<E>>() {
+            if register_event::<LoggedEventSettings<E>>(
+                self.world_mut(),
+                name.to_string(),
+                EventKind::EVENT,
+            ) {
                 self.add_systems(Last, log_event::<E>.in_set(LogEventsSet));
-                register_event::<LoggedEventSettings<E>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_event twice for the event \"{}\"",
@@ -319,11 +322,14 @@ impl LogEvent for App {
         #[cfg(feature = "enabled")]
         {
             let name = type_name::<E>();
-            if !self.world().contains_resource::<LoggedEventSettings<E>>() {
+            if register_event::<LoggedEventSettings<E>>(
+                self.world_mut(),
+                name.to_string(),
+                EventKind::TRIGGER,
+            ) {
                 let observer = Observer::new(log_triggered::<E>);
                 self.world_mut()
                     .spawn((observer, Name::new(format!("LogTrigger<{}>", name))));
-                register_event::<LoggedEventSettings<E>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_triggered twice for the event \"{}\"",
@@ -342,14 +348,14 @@ impl LogEvent for App {
         #[cfg(feature = "enabled")]
         {
             let name = trigger_name::<E, C>();
-            if !self
-                .world()
-                .contains_resource::<LoggedEventSettings<E, C>>()
-            {
+            if register_event::<LoggedEventSettings<E, C>>(
+                self.world_mut(),
+                name.to_string(),
+                EventKind::TRIGGER,
+            ) {
                 let observer = Observer::new(log_component::<E, C>);
                 self.world_mut()
                     .spawn((observer, Name::new(format!("Log{}", name))));
-                register_event::<LoggedEventSettings<E, C>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_trigger twice for the trigger \"{}\"",

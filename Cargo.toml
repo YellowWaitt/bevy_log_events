@@ -12,12 +12,16 @@ readme = "README.md"
 
 [features]
 default = ["enabled"]
-enabled = ["dep:ron", "dep:serde", "dep:bevy_egui", "dep:regex"]
+enabled = ["dep:ron", "dep:serde", "dep:bevy_egui", "dep:regex", "dep:bitflags"]
 editor_window = []
 
 [dependencies]
-bevy = { version = "0.15", default-features = false, features = ["bevy_state"] }
-bevy_egui = { version = "0.31", optional = true }
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_state",
+    "bevy_window",
+] }
+bevy_egui = { version = "0.32", optional = true }
+bitflags = { version = "2.8", optional = true }
 regex = { version = "1", optional = true }
 ron = { version = "0.8", optional = true }
 serde = { version = "1", optional = true }
