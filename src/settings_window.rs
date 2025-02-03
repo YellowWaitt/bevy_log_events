@@ -1,4 +1,7 @@
-use bevy::{log::Level, prelude::*};
+//! Provide the window for editing the [LoggedEventSettings](crate::LoggedEventSettings).
+
+use bevy::{log::Level, prelude::*, window::PrimaryWindow};
+pub use bevy_egui;
 use bevy_egui::{egui, EguiContext, EguiPlugin};
 
 use regex::Regex;
@@ -7,6 +10,8 @@ use crate::{
     systems::LogSettingsIds, utils::get_log_settings_mut_by_id, EventSettings,
     LogEventsPluginSettings,
 };
+
+const WINDOW_NAME: &str = "Logged Events Settings";
 
 pub(crate) fn plugin(app: &mut App) {
     if !app.is_plugin_added::<EguiPlugin>() {
@@ -95,7 +100,7 @@ impl LevelFilter {
 }
 
 #[derive(Default, Resource)]
-pub(crate) struct LogEventsWindowState {
+struct LogEventsWindowState {
     name_filter: String,
     case_sensitive: bool,
     use_regex: bool,
@@ -113,7 +118,7 @@ impl LogEventsWindowState {
             (name.to_lowercase(), self.name_filter.to_lowercase())
         };
         if self.use_regex {
-            self.regex.as_ref().map_or(false, |re| re.is_match(&name))
+            self.regex.as_ref().is_some_and(|re| re.is_match(&name))
         } else {
             name.contains(&filter)
         }
@@ -151,109 +156,108 @@ macro_rules! selectable_label_switch {
     }};
 }
 
-const WINDOW_NAME: &str = "Logged Events Settings";
-
-pub(crate) fn settings_window_ui(
-    world: &mut World,
-    ui: &mut egui::Ui,
-    state: &mut LogEventsWindowState,
-) {
-    let mut plugin_settings = world.resource_mut::<LogEventsPluginSettings>();
-    ui.strong("Plugin settings");
-    ui.checkbox(&mut plugin_settings.enabled, "Enabled");
-
-    ui.separator();
-
-    ui.strong("🔍 Search");
-    ui.horizontal(|ui| {
-        ui.label("Name");
-        ui.text_edit_singleline(&mut state.name_filter);
-        selectable_label_switch!(state.case_sensitive, ui, "Aa", "Match Case");
-        selectable_label_switch!(state.use_regex, ui, ".*", "Use Regular Expression");
-        state.update_regex();
-    });
-    ui.horizontal(|ui| {
-        ui.label("Enabled");
-        egui::ComboBox::from_id_salt("enabled_filter")
-            .selected_text(state.enabled_filter.to_string())
-            .show_ui(ui, |ui| {
-                for filter in EnabledFilter::iter() {
-                    ui.selectable_value(&mut state.enabled_filter, filter, filter.to_string());
-                }
-            });
-    });
-    ui.horizontal(|ui| {
-        ui.label("Level");
-        egui::ComboBox::from_id_salt("level_filter")
-            .selected_text(state.level_filter.to_label())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(
-                    &mut state.level_filter,
-                    LevelFilter::All,
-                    LevelFilter::All.to_label(),
-                );
-                for level in ALL_LEVELS {
-                    let level = LevelFilter::Level(level);
-                    ui.selectable_value(&mut state.level_filter, level, level.to_label());
-                }
-            });
-    });
-    world.resource_scope(|world, log_settings_ids: Mut<LogSettingsIds>| {
-        ui.label(format!(
-            "Displayed : {}/{}",
-            state.shown,
-            log_settings_ids.len()
-        ));
+/// If you want to integrate the ui for editing the [LoggedEventSettings](crate::LoggedEventSettings)
+/// in a custom way you can use this function. In such case you can ignore the `show_window` field
+/// of [LogEventsPluginSettings].
+pub fn log_events_window_ui(world: &mut World, ui: &mut egui::Ui) {
+    world.resource_scope(|world, mut state: Mut<LogEventsWindowState>| {
+        let mut plugin_settings = world.resource_mut::<LogEventsPluginSettings>();
+        ui.strong("Plugin settings");
+        ui.checkbox(&mut plugin_settings.enabled, "Enabled");
 
         ui.separator();
 
-        egui::ScrollArea::vertical()
-            .auto_shrink(true)
-            .show(ui, |ui| {
-                let mut shown = 0;
-                for (name, id) in log_settings_ids.iter() {
-                    if !state.name_contains_filter(name) {
-                        continue;
+        ui.strong("🔍 Search");
+        ui.horizontal(|ui| {
+            ui.label("Name");
+            ui.text_edit_singleline(&mut state.name_filter);
+            selectable_label_switch!(state.case_sensitive, ui, "Aa", "Match Case");
+            selectable_label_switch!(state.use_regex, ui, ".*", "Use Regular Expression");
+            state.update_regex();
+        });
+        ui.horizontal(|ui| {
+            ui.label("Enabled");
+            egui::ComboBox::from_id_salt("enabled_filter")
+                .selected_text(state.enabled_filter.to_string())
+                .show_ui(ui, |ui| {
+                    for filter in EnabledFilter::iter() {
+                        ui.selectable_value(&mut state.enabled_filter, filter, filter.to_string());
                     }
-                    let event_settings = get_log_settings_mut_by_id(world, id);
-                    if !state.must_show(event_settings) {
-                        continue;
+                });
+        });
+        ui.horizontal(|ui| {
+            ui.label("Level");
+            egui::ComboBox::from_id_salt("level_filter")
+                .selected_text(state.level_filter.to_label())
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut state.level_filter,
+                        LevelFilter::All,
+                        LevelFilter::All.to_label(),
+                    );
+                    for level in ALL_LEVELS {
+                        let level = LevelFilter::Level(level);
+                        ui.selectable_value(&mut state.level_filter, level, level.to_label());
                     }
-                    if shown != 0 {
-                        ui.separator();
+                });
+        });
+        world.resource_scope(|world, log_settings_ids: Mut<LogSettingsIds>| {
+            ui.label(format!(
+                "Displayed : {}/{}",
+                state.shown,
+                log_settings_ids.len()
+            ));
+
+            ui.separator();
+
+            egui::ScrollArea::vertical()
+                .auto_shrink(true)
+                .show(ui, |ui| {
+                    state.shown = 0;
+                    for (name, id) in log_settings_ids.iter() {
+                        if !state.name_contains_filter(name) {
+                            continue;
+                        }
+                        let event_settings = get_log_settings_mut_by_id(world, id);
+                        if !state.must_show(event_settings) {
+                            continue;
+                        }
+                        if state.shown != 0 {
+                            ui.separator();
+                        }
+                        state.shown += 1;
+                        ui.strong(name);
+                        ui.checkbox(&mut event_settings.enabled, "Enabled");
+                        ui.checkbox(&mut event_settings.pretty, "Pretty Debug");
+                        egui::ComboBox::from_id_salt(id.index())
+                            .selected_text(colored_text_level(event_settings.level))
+                            .show_ui(ui, |ui| {
+                                for level in ALL_LEVELS {
+                                    ui.selectable_value(
+                                        &mut event_settings.level,
+                                        level,
+                                        colored_text_level(level),
+                                    );
+                                }
+                            });
                     }
-                    shown += 1;
-                    ui.strong(name);
-                    ui.checkbox(&mut event_settings.enabled, "Enabled");
-                    ui.checkbox(&mut event_settings.pretty, "Pretty Debug");
-                    egui::ComboBox::from_id_salt(id.index())
-                        .selected_text(colored_text_level(event_settings.level))
-                        .show_ui(ui, |ui| {
-                            for level in ALL_LEVELS {
-                                ui.selectable_value(
-                                    &mut event_settings.level,
-                                    level,
-                                    colored_text_level(level),
-                                );
-                            }
-                        });
-                }
-                state.shown = shown;
-            });
+                });
+        });
     });
 }
 
 fn show_settings_window(world: &mut World) {
     let mut open = world.resource::<LogEventsPluginSettings>().show_window;
-    if let Ok(egui_context) = world.query::<&mut EguiContext>().get_single(world) {
+    if let Ok(egui_context) = world
+        .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+        .get_single(world)
+    {
         let mut egui_context = egui_context.clone();
-        world.resource_scope(|world, mut state: Mut<LogEventsWindowState>| {
-            egui::Window::new(WINDOW_NAME)
-                .open(&mut open)
-                .show(egui_context.get_mut(), |ui| {
-                    settings_window_ui(world, ui, &mut state);
-                })
-        });
+        egui::Window::new(WINDOW_NAME)
+            .open(&mut open)
+            .show(egui_context.get_mut(), |ui| {
+                log_events_window_ui(world, ui);
+            });
         world.resource_mut::<LogEventsPluginSettings>().show_window = open;
     }
 }

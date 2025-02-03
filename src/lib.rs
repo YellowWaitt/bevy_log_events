@@ -14,7 +14,7 @@ It will be made available again when the \"bevy_editor_pls\" will be updated to 
 );
 // mod editor_window;
 #[cfg(feature = "enabled")]
-mod settings_window;
+pub mod settings_window;
 #[cfg(feature = "enabled")]
 mod systems;
 #[cfg(feature = "enabled")]
