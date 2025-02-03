@@ -30,7 +30,7 @@ use bevy::{log::Level, prelude::*, state::state::FreelyMutableState};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "enabled")]
-use systems::{log_component, log_event, log_triggered, register_component, register_event};
+use systems::{log_component, log_event, log_triggered, register_event};
 #[cfg(feature = "enabled")]
 use utils::{deserialize_level, serialize_level, trigger_name};
 
@@ -77,6 +77,11 @@ impl Plugin for LogEventsPlugin {
 /// the saved [LoggedEventSettings] resources from the previous run of the program
 /// will be restored. After this set you can access these resources to read and write
 /// on them.
+#[deprecated(
+    since = "0.4.2",
+    note = "This set is no longer used and will be removed in a future version. \
+LoggedEventSettings can now be accessed whenever LogEvent trait functions are used."
+)]
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegisterEventsSet;
 
@@ -279,14 +284,14 @@ impl LogEvent for App {
     {
         #[cfg(feature = "enabled")]
         {
+            let name = type_name::<E>();
             if !self.world().contains_resource::<LoggedEventSettings<E>>() {
-                self.insert_resource(LoggedEventSettings::<E>::default())
-                    .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet))
-                    .add_systems(Last, log_event::<E>.in_set(LogEventsSet));
+                self.add_systems(Last, log_event::<E>.in_set(LogEventsSet));
+                register_event::<LoggedEventSettings<E>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_event twice for the event \"{}\"",
-                    type_name::<E>()
+                    name
                 );
             }
         }
@@ -313,18 +318,16 @@ impl LogEvent for App {
     {
         #[cfg(feature = "enabled")]
         {
+            let name = type_name::<E>();
             if !self.world().contains_resource::<LoggedEventSettings<E>>() {
                 let observer = Observer::new(log_triggered::<E>);
-                self.world_mut().spawn((
-                    observer,
-                    Name::new(format!("LogTrigger<{}>", type_name::<E>())),
-                ));
-                self.insert_resource(LoggedEventSettings::<E>::default())
-                    .add_systems(Startup, register_event::<E>.in_set(RegisterEventsSet));
+                self.world_mut()
+                    .spawn((observer, Name::new(format!("LogTrigger<{}>", name))));
+                register_event::<LoggedEventSettings<E>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_triggered twice for the event \"{}\"",
-                    type_name::<E>()
+                    name
                 );
             }
         }
@@ -338,24 +341,19 @@ impl LogEvent for App {
     {
         #[cfg(feature = "enabled")]
         {
+            let name = trigger_name::<E, C>();
             if !self
                 .world()
                 .contains_resource::<LoggedEventSettings<E, C>>()
             {
                 let observer = Observer::new(log_component::<E, C>);
-                self.world_mut().spawn((
-                    observer,
-                    Name::new(format!("Log{}", trigger_name::<E, C>())),
-                ));
-                self.insert_resource(LoggedEventSettings::<E, C>::default())
-                    .add_systems(
-                        Startup,
-                        register_component::<E, C>.in_set(RegisterEventsSet),
-                    );
+                self.world_mut()
+                    .spawn((observer, Name::new(format!("Log{}", name))));
+                register_event::<LoggedEventSettings<E, C>>(self.world_mut(), name.to_string());
             } else {
                 warn!(
                     "You tried to use log_trigger twice for the trigger \"{}\"",
-                    trigger_name::<E, C>()
+                    name
                 );
             }
         }

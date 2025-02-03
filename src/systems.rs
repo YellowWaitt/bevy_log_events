@@ -71,36 +71,19 @@ fn plugin_enabled(plugin_settings: Res<LogEventsPluginSettings>) -> bool {
     plugin_settings.enabled
 }
 
-pub(crate) fn register_event<E: Event>(world: &mut World) {
-    let name = type_name::<E>().to_string();
+pub(crate) fn register_event<T>(world: &mut World, name: String)
+where
+    T: Resource + Default + DerefMut<Target = EventSettings>,
+{
+    world.insert_resource(T::default());
     world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
         if let Some(previous) = plugin_settings.previous_settings.get(&name) {
-            let mut event_settings = world.resource_mut::<LoggedEventSettings<E>>();
+            let mut event_settings = world.resource_mut::<T>();
             **event_settings = *previous;
         }
     });
     world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
-        let id = world
-            .components()
-            .resource_id::<LoggedEventSettings<E>>()
-            .unwrap();
-        log_settings_ids.insert(name, id);
-    });
-}
-
-pub(crate) fn register_component<E: Event, C: Component>(world: &mut World) {
-    let name = trigger_name::<E, C>();
-    world.resource_scope(|world, plugin_settings: Mut<LogEventsPluginSettings>| {
-        if let Some(previous) = plugin_settings.previous_settings.get(&name) {
-            let mut event_settings = world.resource_mut::<LoggedEventSettings<E, C>>();
-            **event_settings = *previous;
-        }
-    });
-    world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
-        let id = world
-            .components()
-            .resource_id::<LoggedEventSettings<E, C>>()
-            .unwrap();
+        let id = world.components().resource_id::<T>().unwrap();
         log_settings_ids.insert(name, id);
     });
 }
