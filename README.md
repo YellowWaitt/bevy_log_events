@@ -13,7 +13,7 @@
 - Easily log your events by adding a single line of code for each of them.
 - You can configure independently how each events will be logged using the `LoggedEventSettings<E>` resources.
 - Your settings are saved when you exit your application and reloaded the next time you launch it.
-- You can use a window to easily edit the settings for all your logged events :
+- You can use a window to edit the settings for all your logged events :
 
 ![](assets/editor_window.png)
 
@@ -106,8 +106,8 @@ dev = ["bevy_log_events/enabled"]
 default = ["dev"]
 
 [dependencies]
-# Declare that you do not want default-feautres in your dependencies
-bevy_log_events = { version = "0.4.1", default-features = false }
+# Declare that you do not want default-features in your dependencies
+bevy_log_events = { version = "0.4.2", default-features = false }
 ```
 
 Then you can run your program as follow :
@@ -118,20 +118,18 @@ cargo run --features dev
 cargo run --no-default-features
 ```
 
-<!-- ### editor_window
-
-This feature add an editor window that you can use to edit the `LoggedEventSettings<E>` resources for all the events you have registered.<br>
-To use it you will need to add the [`bevy_editor_pls`](https://github.com/jakobhellermann/bevy_editor_pls) as a dependecy of your project and add the `EditorPlugin` to your app before the `LogEventsPlugin`. -->
-
 ## Note
 
-Events registred with the use of `log_event` or `add_and_log_event` are all logged in the `Last` schedule inside the `LogEventSet` at the end of each frame. So keep in mind that these events will be log with a delay and if many events of different types are send in the same frame they may not be logged in the same order they were sent.
+Events registered with the use of `log_event` or `add_and_log_event` are all logged in the `Last` schedule inside the `LogEventSet` at the end of each frame. So keep in mind that these events will be logged with a delay and if many events of different types are sent in the same frame they may not be logged in the same order they were sent.
 
 ## Bevy Versions Table
 
-| bevy_log_events | bevy | bevy_editor_pls   |
-| --------------- | ---- | ----------------- |
-| 0.4             | 0.15 | Not yet available |
-| 0.3             | 0.14 | 0.9 - 0.10        |
-| 0.2             | 0.14 | 0.9 - 0.10        |
-| 0.1             | 0.13 | 0.8               |
+| bevy_log_events | bevy | bevy_egui |
+| --------------- | ---- | --------- |
+| 0.4.2           | 0.15 | 0.32      |
+
+| bevy_log_events | bevy | bevy_editor_pls |
+| --------------- | ---- | --------------- |
+| 0.3             | 0.14 | 0.9 - 0.10      |
+| 0.2             | 0.14 | 0.9 - 0.10      |
+| 0.1             | 0.13 | 0.8             |

@@ -49,10 +49,10 @@ fn main() {
 
 fn toggle_window(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut pluggin_settings: ResMut<LogEventsPluginSettings>,
+    mut plugin_settings: ResMut<LogEventsPluginSettings>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
-        pluggin_settings.show_window = !pluggin_settings.show_window;
+        plugin_settings.show_window = !plugin_settings.show_window;
     }
 }
 
@@ -66,10 +66,10 @@ impl Mine {
     fn random(rand: &mut ChaCha8Rng) -> Self {
         Mine {
             pos: Vec2::new(
-                (rand.gen::<f32>() - 0.5) * 1200.0,
-                (rand.gen::<f32>() - 0.5) * 600.0,
+                (rand.random::<f32>() - 0.5) * 1200.0,
+                (rand.random::<f32>() - 0.5) * 600.0,
             ),
-            size: 4.0 + rand.gen::<f32>() * 16.0,
+            size: 4.0 + rand.random::<f32>() * 16.0,
         }
     }
 }

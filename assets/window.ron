@@ -16,6 +16,11 @@ LoggedEventsSettings(
             pretty: false,
             level: "INFO",
         ),
+        "OnReplace<window::plugins::MyComponent>": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
         "bevy_app::app::AppExit": EventSettings(
             enabled: true,
             pretty: true,
@@ -72,11 +77,6 @@ LoggedEventsSettings(
             level: "INFO",
         ),
         "window::plugins::C": EventSettings(
-            enabled: true,
-            pretty: true,
-            level: "INFO",
-        ),
-        "window::plugins::D": EventSettings(
             enabled: true,
             pretty: true,
             level: "INFO",

@@ -1,6 +1,6 @@
 [package]
 name = "bevy_log_events"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2021"
 description = "A Bevy plugin that helps to log events."
 repository = "https://github.com/YellowWaitt/bevy_log_events"
@@ -28,8 +28,11 @@ serde = { version = "1", optional = true }
 
 [dev-dependencies]
 bevy = "0.15"
-rand = "0.8.5"
-rand_chacha = "0.3.1"
+rand = "0.9"
+rand_chacha = "0.9"
+
+[package.metadata.docs.rs]
+features = ["bevy/x11"]
 
 [[example]]
 name = "simple"

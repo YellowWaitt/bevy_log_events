@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+#![allow(deprecated)]
 
 //! [`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a
 //! [Bevy](https://bevyengine.org/) plugin that introduce
@@ -12,7 +13,6 @@ compile_error!(
     "The \"editor_window\" feature is not yet available for Bevy 0.15.
 It will be made available again when the \"bevy_editor_pls\" will be updated to Bevy 0.15."
 );
-// mod editor_window;
 #[cfg(feature = "enabled")]
 pub mod settings_window;
 #[cfg(feature = "enabled")]
@@ -71,7 +71,7 @@ impl Plugin for LogEventsPlugin {
     fn build(&self, _app: &mut App) {}
 }
 
-/// The [SystemSet] were the [Event] are registred.
+/// The [SystemSet] were the [Event] are registered.
 ///
 /// This [SystemSet] is configured to run in the [Startup] schedule. This is were
 /// the saved [LoggedEventSettings] resources from the previous run of the program
@@ -85,7 +85,7 @@ LoggedEventSettings can now be accessed whenever LogEvent trait functions are us
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RegisterEventsSet;
 
-/// The [SystemSet] were the [Event] registred with [log_event](LogEvent::log_event)
+/// The [SystemSet] were the [Event] registered with [log_event](LogEvent::log_event)
 /// and [add_and_log_event](LogEvent::add_and_log_event) will be log.
 ///
 /// This [SystemSet] is configured to run in the [Last] schedule at the end of each
@@ -133,7 +133,7 @@ impl Default for EventSettings {
 pub struct LogEventsPluginSettings {
     /// If false no [Event] will be logged.
     pub enabled: bool,
-    /// Whether to show or not the window to configure the [LoggedEventSettings].
+    /// Whether to show or not the window to configure all the [LoggedEventSettings].
     pub show_window: bool,
     #[cfg(feature = "enabled")]
     saved_settings: PathBuf,
@@ -176,11 +176,11 @@ impl<E, C> Default for LoggedEventSettings<E, C> {
 ///    These functions will not interact with sent events.<br>
 ///    These events will logged without a delay as soon as they are triggered.
 ///
-/// As each one of these functions log events in independant situations you can use
+/// As each one of these functions log events in independent situations you can use
 /// several of them at the same time for the same [Event] type, you will not get the same
 /// event log multiple times by doing that.
 ///
-/// If an event `E` is registred with [log_event](LogEvent::log_event) and [log_triggered](LogEvent::log_triggered),
+/// If an event `E` is registered with [log_event](LogEvent::log_event) and [log_triggered](LogEvent::log_triggered),
 /// it will share the same [LoggedEventSettings] resource for logging in both context.<br>
 /// In case of [log_trigger](LogEvent::log_trigger), you will get one [LoggedEventSettings] resource
 /// for each pair of event and component (`E`, `C`) you register.
@@ -235,9 +235,6 @@ pub trait LogEvent {
     /// This will not log the content of the triggered event. If you want to log the event use
     /// [log_triggered](LogEvent::log_triggered).
     ///
-    /// This was designed with [OnAdd], [OnInsert], [OnRemove] and [OnReplace] in mind but you can use
-    /// it with your own events too.
-    ///
     /// As an example :
     /// ```
     /// // If you log MyComponent when MyEvent is triggered
@@ -249,7 +246,7 @@ pub trait LogEvent {
     /// // log the entity id and its associated MyComponent
     /// commands.trigger_targets(MyEvent, entity);
     ///
-    /// // With this everytime MyComponent is added to an entity it
+    /// // With this every time MyComponent is added to an entity it
     /// // will log MyComponent and the entity id it was added to
     /// app.log_trigger::<OnAdd, MyComponent>();
     /// ```

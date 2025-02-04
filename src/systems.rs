@@ -10,6 +10,7 @@ use std::{
 
 use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
 
+use bitflags::bitflags;
 use ron::{de::from_reader, ser::PrettyConfig};
 
 use crate::{
@@ -24,10 +25,6 @@ impl Plugin for LogEventsPlugin {
             .configure_sets(Last, LogEventsSet.run_if(plugin_enabled))
             .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>))
             .add_plugins(crate::settings_window::plugin);
-        // #[cfg(feature = "editor_window")]
-        // {
-        //     app.add_plugins(crate::editor_window::plugin);
-        // }
     }
 }
 

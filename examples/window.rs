@@ -47,9 +47,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn toggle_window(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut pluggin_settings: ResMut<LogEventsPluginSettings>,
+    mut plugin_settings: ResMut<LogEventsPluginSettings>,
 ) {
     if keyboard_input.just_pressed(KeyCode::Space) {
-        pluggin_settings.show_window = !pluggin_settings.show_window;
+        plugin_settings.show_window = !plugin_settings.show_window;
     }
 }

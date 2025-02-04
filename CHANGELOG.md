@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.2
+
+### Added
+
+- The `log_component_hooks` function to the `LogEvent` trait.
+- The `log_events_window_ui` function has been made public.
+
+### Deprecated
+
+- The `RegisterEventsSet` is no longer used.
+
+### Fixed
+
+- The protection against double event registration does not prevent the use of `log_event` and `log_triggered` for the same event type.
+
 ## 0.4.1
 
 ### Added
@@ -14,14 +29,13 @@
 
 ### Added
 
-- The `add_and_log_state_scoped_event` functions to the `LogEvent` trait.
+- The `add_and_log_state_scoped_event` function to the `LogEvent` trait.
 
 ### Changed
 
 - Updated `bevy` version to 0.15.
 - Temporarily removed the `editor_window` feature waiting for the `bevy_editor_pls` update.
-- The functions of the `LogEvent` trait now check if they were already used for the
-  same events, preventing events to be logged twice.
+- The functions of the `LogEvent` trait now check if they were already used for the same events, preventing events from being logged twice.
 
 ## 0.3.0
 
@@ -39,7 +53,7 @@
 
 ## 0.2.0
 
-### Changes
+### Changed
 
 - Updated `bevy` version to 0.14.
 
