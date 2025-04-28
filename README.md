@@ -108,6 +108,8 @@ To see a more complete example with triggered events check the copy of the offic
 cargo run --example observers
 ```
 
+You can also try these examples by adding the `bevy/track_location` feature to see that the locations of send and trigger events are also logged.
+
 ## Cargo Features
 
 ### enabled

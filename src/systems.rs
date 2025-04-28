@@ -8,7 +8,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
+use bevy::{
+    ecs::{change_detection::MaybeLocation, component::ComponentId},
+    log::Level,
+    prelude::*,
+};
 
 use bitflags::bitflags;
 use ron::{de::from_reader, ser::PrettyConfig};
@@ -126,17 +130,27 @@ fn log(level: Level, to_log: &str) {
     }
 }
 
-fn format_and_log_event<E>(settings: &EventSettings, event: &E)
+fn format_event<E>(
+    settings: &EventSettings,
+    event: &E,
+    location: MaybeLocation,
+) -> Result<String, Box<dyn Error>>
 where
     E: std::fmt::Debug,
 {
     let name = type_name::<E>();
-    let to_log = if settings.pretty {
-        format!("{}: {:#?}", name, event)
+    let mut to_log = String::new();
+    to_log.write_str(name)?;
+    if let Some(location) = location.into_option() {
+        to_log.write_fmt(format_args!(" at {}", location))?;
+    }
+    to_log.write_str(": ")?;
+    if settings.pretty {
+        to_log.write_fmt(format_args!("{:#?}", event))?;
     } else {
-        format!("{}: {:?}", name, event)
-    };
-    log(settings.level, &to_log);
+        to_log.write_fmt(format_args!("{:?}", event))?;
+    }
+    Ok(to_log)
 }
 
 fn format_entity_and_object<T>(
@@ -145,6 +159,7 @@ fn format_entity_and_object<T>(
     entity_name: &Option<&Name>,
     entity: Entity,
     object: &T,
+    location: MaybeLocation,
 ) -> Result<String, Box<dyn Error>>
 where
     T: std::fmt::Debug,
@@ -152,10 +167,14 @@ where
     let mut to_log = String::new();
     to_log.write_fmt(format_args!("{} on ", event_name))?;
     if let Some(name) = entity_name {
-        to_log.write_fmt(format_args!("{}({}): ", name, entity))?;
+        to_log.write_fmt(format_args!("{}({})", name, entity))?;
     } else {
-        to_log.write_fmt(format_args!("{}: ", entity))?;
+        to_log.write_fmt(format_args!("{}", entity))?;
     }
+    if let Some(location) = location.into_option() {
+        to_log.write_fmt(format_args!(" at {}", location))?;
+    }
+    to_log.write_str(": ")?;
     if settings.pretty {
         to_log.write_fmt(format_args!("{:#?}", object))?;
     } else {
@@ -171,8 +190,10 @@ where
     if !settings.enabled {
         return;
     }
-    for event in events.read() {
-        format_and_log_event(&settings, event);
+    for (event, id) in events.read_with_id() {
+        if let Ok(to_log) = format_event(&settings, event, id.caller) {
+            log(settings.level, &to_log);
+        }
     }
 }
 
@@ -191,13 +212,18 @@ pub(crate) fn log_triggered<E>(
     let event = trigger.event();
     if target != Entity::PLACEHOLDER {
         let name = names.get(target).ok();
-        if let Ok(to_log) =
-            format_entity_and_object::<E>(&settings, type_name::<E>(), &name, target, event)
-        {
+        if let Ok(to_log) = format_entity_and_object::<E>(
+            &settings,
+            type_name::<E>(),
+            &name,
+            target,
+            event,
+            trigger.caller(),
+        ) {
             log(settings.level, &to_log);
         }
-    } else {
-        format_and_log_event(&settings, event);
+    } else if let Ok(to_log) = format_event(&settings, event, trigger.caller()) {
+        log(settings.level, &to_log);
     }
 }
 
@@ -221,6 +247,7 @@ pub(crate) fn log_component<E, C>(
             &name,
             target,
             component,
+            trigger.caller(),
         ) {
             log(settings.level, &to_log);
         }

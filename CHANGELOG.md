@@ -2,6 +2,10 @@
 
 ## 0.5.0
 
+### Added
+
+- Send and trigger event locations are now displayed if the `bevy/track_location` feature is enabled.
+
 ### Changed
 
 - Updated `bevy` version to 0.16.
