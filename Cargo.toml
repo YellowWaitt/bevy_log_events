@@ -33,6 +33,13 @@ rand_chacha = "0.9"
 
 [package.metadata.docs.rs]
 features = ["bevy/x11"]
+rustc-args = ["--cfg", "docsrs_dep"]
+rustdoc-args = [
+    "--cfg",
+    "docsrs_dep",
+    "--html-after-content",
+    "docs-rs/trait-tags.html",
+]
 
 [[example]]
 name = "simple"
