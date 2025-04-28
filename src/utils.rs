@@ -2,7 +2,7 @@ use std::{any::type_name, collections::BTreeMap};
 
 use bevy::{ecs::component::ComponentId, log::Level, prelude::*};
 
-use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
 
 use crate::EventSettings;
 
@@ -31,8 +31,7 @@ where
         "DEBUG" => Ok(Level::DEBUG),
         "TRACE" => Ok(Level::TRACE),
         _ => Err(D::Error::custom(format!(
-            "\"{}\" does not represent a valid log Level",
-            s
+            "\"{s}\" does not represent a valid log Level"
         ))),
     }
 }

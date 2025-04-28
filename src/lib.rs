@@ -23,7 +23,7 @@ use bevy::{log::Level, prelude::*, state::state::FreelyMutableState};
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "enabled")]
-use systems::{log_component, log_event, log_triggered, register_event, EventKind};
+use systems::{EventKind, log_component, log_event, log_triggered, register_event};
 #[cfg(feature = "enabled")]
 use utils::{deserialize_level, serialize_level, trigger_name};
 
@@ -305,7 +305,7 @@ impl LogEvent for App {
             ) {
                 let observer = Observer::new(log_triggered::<E>);
                 self.world_mut()
-                    .spawn((observer, Name::new(format!("LogTrigger<{}>", name))));
+                    .spawn((observer, Name::new(format!("LogTrigger<{name}>"))));
             } else {
                 warn!(
                     "You tried to use log_triggered twice for the event \"{}\"",
@@ -331,7 +331,7 @@ impl LogEvent for App {
             ) {
                 let observer = Observer::new(log_component::<E, C>);
                 self.world_mut()
-                    .spawn((observer, Name::new(format!("Log{}", name))));
+                    .spawn((observer, Name::new(format!("Log{name}"))));
             } else {
                 warn!(
                     "You tried to use log_trigger twice for the trigger \"{}\"",

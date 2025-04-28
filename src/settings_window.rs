@@ -1,13 +1,13 @@
 //! Provide the window for editing the [LoggedEventSettings](crate::LoggedEventSettings).
 
 use bevy::{log::Level, prelude::*, window::PrimaryWindow};
-use bevy_egui::{egui, EguiContext, EguiContextPass, EguiPlugin};
+use bevy_egui::{EguiContext, EguiContextPass, EguiPlugin, egui};
 
 use regex::Regex;
 
 use crate::{
-    systems::LogSettingsIds, utils::get_log_settings_mut_by_id, EventSettings,
-    LogEventsPluginSettings,
+    EventSettings, LogEventsPluginSettings, systems::LogSettingsIds,
+    utils::get_log_settings_mut_by_id,
 };
 
 const WINDOW_NAME: &str = "Logged Events Settings";
@@ -69,7 +69,7 @@ impl std::fmt::Display for EnabledFilter {
             EnabledFilter::Enabled => "Enabled",
             EnabledFilter::Disabled => "Disabled",
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 

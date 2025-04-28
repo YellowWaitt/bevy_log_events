@@ -1,7 +1,7 @@
 [package]
 name = "bevy_log_events"
 version = "0.5.0"
-edition = "2021"
+edition = "2024"
 description = "A Bevy plugin that helps to log events."
 repository = "https://github.com/YellowWaitt/bevy_log_events"
 license = "MIT OR Apache-2.0"

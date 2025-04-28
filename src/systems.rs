@@ -3,7 +3,7 @@ use std::{
     collections::BTreeMap,
     error::Error,
     fmt::Write,
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     ops::DerefMut,
     path::{Path, PathBuf},
 };
@@ -18,8 +18,8 @@ use bitflags::bitflags;
 use ron::{de::from_reader, ser::PrettyConfig};
 
 use crate::{
-    utils::{get_log_settings_by_id, trigger_name, LoggedEventsSettings},
     EventSettings, LogEventsPlugin, LogEventsPluginSettings, LogEventsSet, LoggedEventSettings,
+    utils::{LoggedEventsSettings, get_log_settings_by_id, trigger_name},
 };
 
 impl Plugin for LogEventsPlugin {
@@ -142,13 +142,13 @@ where
     let mut to_log = String::new();
     to_log.write_str(name)?;
     if let Some(location) = location.into_option() {
-        to_log.write_fmt(format_args!(" at {}", location))?;
+        to_log.write_fmt(format_args!(" at {location}"))?;
     }
     to_log.write_str(": ")?;
     if settings.pretty {
-        to_log.write_fmt(format_args!("{:#?}", event))?;
+        to_log.write_fmt(format_args!("{event:#?}"))?;
     } else {
-        to_log.write_fmt(format_args!("{:?}", event))?;
+        to_log.write_fmt(format_args!("{event:?}"))?;
     }
     Ok(to_log)
 }
@@ -165,20 +165,20 @@ where
     T: std::fmt::Debug,
 {
     let mut to_log = String::new();
-    to_log.write_fmt(format_args!("{} on ", event_name))?;
+    to_log.write_fmt(format_args!("{event_name} on "))?;
     if let Some(name) = entity_name {
-        to_log.write_fmt(format_args!("{}({})", name, entity))?;
+        to_log.write_fmt(format_args!("{name}({entity})"))?;
     } else {
-        to_log.write_fmt(format_args!("{}", entity))?;
+        to_log.write_fmt(format_args!("{entity}"))?;
     }
     if let Some(location) = location.into_option() {
-        to_log.write_fmt(format_args!(" at {}", location))?;
+        to_log.write_fmt(format_args!(" at {location}"))?;
     }
     to_log.write_str(": ")?;
     if settings.pretty {
-        to_log.write_fmt(format_args!("{:#?}", object))?;
+        to_log.write_fmt(format_args!("{object:#?}"))?;
     } else {
-        to_log.write_fmt(format_args!("{:?}", object))?;
+        to_log.write_fmt(format_args!("{object:?}"))?;
     }
     Ok(to_log)
 }
