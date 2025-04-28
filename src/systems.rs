@@ -187,12 +187,12 @@ pub(crate) fn log_triggered<E>(
     if !plugin_settings.enabled || !settings.enabled {
         return;
     }
-    let entity = trigger.entity();
+    let target = trigger.target();
     let event = trigger.event();
-    if entity != Entity::PLACEHOLDER {
-        let name = names.get(entity).ok();
+    if target != Entity::PLACEHOLDER {
+        let name = names.get(target).ok();
         if let Ok(to_log) =
-            format_entity_and_object::<E>(&settings, type_name::<E>(), &name, entity, event)
+            format_entity_and_object::<E>(&settings, type_name::<E>(), &name, target, event)
         {
             log(settings.level, &to_log);
         }
@@ -213,13 +213,13 @@ pub(crate) fn log_component<E, C>(
     if !plugin_settings.enabled || !settings.enabled {
         return;
     }
-    let entity = trigger.entity();
-    if let Ok((component, name)) = query.get(entity) {
+    let target = trigger.target();
+    if let Ok((component, name)) = query.get(target) {
         if let Ok(to_log) = format_entity_and_object::<C>(
             &settings,
             &trigger_name::<E, C>(),
             &name,
-            entity,
+            target,
             component,
         ) {
             log(settings.level, &to_log);

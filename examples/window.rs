@@ -5,12 +5,16 @@ use bevy::{
     prelude::*,
     window::{AppLifecycle, WindowClosed, WindowCreated, WindowResized},
 };
+use bevy_egui::EguiPlugin;
 use bevy_log_events::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
+            EguiPlugin {
+                enable_multipass_for_primary_context: true,
+            },
             LogEventsPlugin::new("assets/window.ron"),
             plugins::plugin,
         ))

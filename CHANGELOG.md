@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0
+
+### Changed
+
+- Updated `bevy` version to 0.16.
+- To match `bevy_egui` [recommandations](https://docs.rs/bevy_egui/latest/bevy_egui/struct.EguiPlugin.html#note-to-developers-of-public-plugins) you will now have to add yourself the `EguiPlugin` before the `LogEventsPlugin`.
+
+### Removed
+
+- The deprecated `RegisterEventsSet`.
+- The no longer used `editor_window` feature.
+
 ## 0.4.2
 
 ### Added

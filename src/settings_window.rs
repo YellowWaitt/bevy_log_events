@@ -1,8 +1,7 @@
 //! Provide the window for editing the [LoggedEventSettings](crate::LoggedEventSettings).
 
 use bevy::{log::Level, prelude::*, window::PrimaryWindow};
-pub use bevy_egui;
-use bevy_egui::{egui, EguiContext, EguiPlugin};
+use bevy_egui::{egui, EguiContext, EguiContextPass, EguiPlugin};
 
 use regex::Regex;
 
@@ -14,11 +13,9 @@ use crate::{
 const WINDOW_NAME: &str = "Logged Events Settings";
 
 pub(crate) fn plugin(app: &mut App) {
-    if !app.is_plugin_added::<EguiPlugin>() {
-        app.add_plugins(EguiPlugin);
-    }
+    assert!(app.is_plugin_added::<EguiPlugin>());
     app.insert_resource(LogEventsWindowState::default())
-        .add_systems(Update, show_settings_window);
+        .add_systems(EguiContextPass, show_settings_window);
 }
 
 const ALL_LEVELS: [Level; 5] = [
@@ -250,7 +247,7 @@ fn show_settings_window(world: &mut World) {
     let mut open = world.resource::<LogEventsPluginSettings>().show_window;
     if let Ok(egui_context) = world
         .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
-        .get_single(world)
+        .single(world)
     {
         let mut egui_context = egui_context.clone();
         egui::Window::new(WINDOW_NAME)

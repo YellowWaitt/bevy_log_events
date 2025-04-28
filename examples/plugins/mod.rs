@@ -32,7 +32,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 fn fire_event<T: Event + Default>(mut events: EventWriter<T>) {
-    events.send(T::default());
+    events.write(T::default());
 }
 
 fn trigger(mut commands: Commands) {
@@ -41,7 +41,7 @@ fn trigger(mut commands: Commands) {
 
 fn trigger_and_send(mut commands: Commands, mut events: EventWriter<TriggeredAndSent>) {
     commands.trigger(TriggeredAndSent { triggered: true });
-    events.send(TriggeredAndSent { triggered: false });
+    events.write(TriggeredAndSent { triggered: false });
 }
 
 fn setup(mut commands: Commands) {
@@ -52,8 +52,8 @@ fn modify_entity(
     mut commands: Commands,
     query: Query<(Entity, Option<&MyComponent>), With<MyEntity>>,
     mut index: Local<usize>,
-) {
-    let (entity, my_component) = query.single();
+) -> Result {
+    let (entity, my_component) = query.single()?;
     if my_component.is_some() && *index % 5 == 0 {
         commands.entity(entity).remove::<MyComponent>();
     } else {
@@ -62,6 +62,7 @@ fn modify_entity(
             .insert(MyComponent { index: *index });
     }
     *index += 1;
+    Ok(())
 }
 
 #[derive(Event, Debug, Default)]

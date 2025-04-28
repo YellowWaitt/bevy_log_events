@@ -1,16 +1,24 @@
 //! Demonstrates how to observe life-cycle triggers as well as define custom ones.
 
 use bevy::{
+    platform::collections::{HashMap, HashSet},
     prelude::*,
-    utils::{HashMap, HashSet},
 };
-use bevy_log_events::prelude::*;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
+use bevy_egui::EguiPlugin;
+use bevy_log_events::prelude::*;
+
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, LogEventsPlugin::new("assets/observers.ron")))
+        .add_plugins((
+            DefaultPlugins,
+            EguiPlugin {
+                enable_multipass_for_primary_context: false,
+            },
+            LogEventsPlugin::new("assets/observers.ron"),
+        ))
         .init_resource::<SpatialIndex>()
         .add_systems(Startup, setup)
         .add_systems(Update, (draw_shapes, handle_click))
@@ -131,12 +139,12 @@ fn on_add_mine(
     query: Query<&Mine>,
     mut index: ResMut<SpatialIndex>,
 ) {
-    let mine = query.get(trigger.entity()).unwrap();
+    let mine = query.get(trigger.target()).unwrap();
     let tile = (
         (mine.pos.x / CELL_SIZE).floor() as i32,
         (mine.pos.y / CELL_SIZE).floor() as i32,
     );
-    index.map.entry(tile).or_default().insert(trigger.entity());
+    index.map.entry(tile).or_default().insert(trigger.target());
 }
 
 // Remove despawned mines from our index
@@ -145,20 +153,20 @@ fn on_remove_mine(
     query: Query<&Mine>,
     mut index: ResMut<SpatialIndex>,
 ) {
-    let mine = query.get(trigger.entity()).unwrap();
+    let mine = query.get(trigger.target()).unwrap();
     let tile = (
         (mine.pos.x / CELL_SIZE).floor() as i32,
         (mine.pos.y / CELL_SIZE).floor() as i32,
     );
     index.map.entry(tile).and_modify(|set| {
-        set.remove(&trigger.entity());
+        set.remove(&trigger.target());
     });
 }
 
 fn explode_mine(trigger: Trigger<Explode>, query: Query<&Mine>, mut commands: Commands) {
     // If a triggered event is targeting a specific entity you can access it with `.entity()`
-    let id = trigger.entity();
-    let Some(mut entity) = commands.get_entity(id) else {
+    let id = trigger.target();
+    let Ok(mut entity) = commands.get_entity(id) else {
         return;
     };
     info!("Boom! {:?} exploded.", id.index());

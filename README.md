@@ -24,12 +24,13 @@ Add the crate to your Cargo.toml :
 cargo add bevy_log_events
 ```
 
-Then  you just have to add the `LogEventsPlugin` plugin and use the functions from the `LogEvent` trait to log your events :
+Then  you just have to add the `EguiPlugin` and `LogEventsPlugin` plugin and use the functions from the `LogEvent` trait to log your events :
 
 ```rust
 use std::time::Duration;
 
 use bevy::{prelude::*, time::common_conditions::on_timer};
+use bevy_egui::EguiPlugin;
 use bevy_log_events::prelude::*;
 
 // You must implement Debug for the events you want to log
@@ -42,6 +43,10 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
+            // You need to add the EguiPlugin before the LogEventsPlugin
+            EguiPlugin {
+                enable_multipass_for_primary_context: true,
+            },
             // Add the logging plugin
             LogEventsPlugin::new("assets/simple.ron"),
         ))
@@ -53,14 +58,17 @@ fn main() {
         .log_event::<CursorEntered>()
         .add_systems(
             Update,
-            (send_my_event, trigger_my_event).run_if(on_timer(Duration::from_secs(1))),
+            (
+                toggle_window,
+                (send_my_event, trigger_my_event).run_if(on_timer(Duration::from_secs(1))),
+            ),
         )
         .run();
 }
 
 // MyEvent will be sent and logged every second at the end of each frame
 fn send_my_event(mut events: EventWriter<MyEvent>) {
-    events.send(MyEvent {
+    events.write(MyEvent {
         source: "sent".into(),
     });
 }
@@ -72,6 +80,15 @@ fn trigger_my_event(mut commands: Commands) {
     });
 }
 
+// Toggle the editor window
+fn toggle_window(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut plugin_settings: ResMut<LogEventsPluginSettings>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Space) {
+        plugin_settings.show_window = !plugin_settings.show_window;
+    }
+}
 ```
 
 ## Examples
@@ -107,7 +124,7 @@ default = ["dev"]
 
 [dependencies]
 # Declare that you do not want default-features in your dependencies
-bevy_log_events = { version = "0.4.2", default-features = false }
+bevy_log_events = { version = "0.5.0", default-features = false }
 ```
 
 Then you can run your program as follow :
@@ -126,6 +143,7 @@ Events registered with the use of `log_event` or `add_and_log_event` are all log
 
 | bevy_log_events | bevy | bevy_egui |
 | --------------- | ---- | --------- |
+| 0.5             | 0.16 | 0.34      |
 | 0.4.2           | 0.15 | 0.32      |
 
 | bevy_log_events | bevy | bevy_editor_pls |

@@ -1,5 +1,4 @@
 #![warn(missing_docs)]
-#![allow(deprecated)]
 
 //! [`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a
 //! [Bevy](https://bevyengine.org/) plugin that introduce
@@ -7,12 +6,6 @@
 //! It will helps you log your [Event] while allowing you to configure independently
 //! how each events are logged even during program execution.
 
-#[cfg(feature = "enabled")]
-#[cfg(feature = "editor_window")]
-compile_error!(
-    "The \"editor_window\" feature is not yet available for Bevy 0.15.
-It will be made available again when the \"bevy_editor_pls\" will be updated to Bevy 0.15."
-);
 #[cfg(feature = "enabled")]
 pub mod settings_window;
 #[cfg(feature = "enabled")]
@@ -38,7 +31,7 @@ use utils::{deserialize_level, serialize_level, trigger_name};
 pub mod prelude {
     pub use super::{
         EventSettings, LogEvent, LogEventsPlugin, LogEventsPluginSettings, LogEventsSet,
-        LoggedEventSettings, RegisterEventsSet,
+        LoggedEventSettings,
     };
 }
 
@@ -70,20 +63,6 @@ impl Default for LogEventsPlugin {
 impl Plugin for LogEventsPlugin {
     fn build(&self, _app: &mut App) {}
 }
-
-/// The [SystemSet] were the [Event] are registered.
-///
-/// This [SystemSet] is configured to run in the [Startup] schedule. This is were
-/// the saved [LoggedEventSettings] resources from the previous run of the program
-/// will be restored. After this set you can access these resources to read and write
-/// on them.
-#[deprecated(
-    since = "0.4.2",
-    note = "This set is no longer used and will be removed in a future version. \
-LoggedEventSettings can now be accessed whenever LogEvent trait functions are used."
-)]
-#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct RegisterEventsSet;
 
 /// The [SystemSet] were the [Event] registered with [log_event](LogEvent::log_event)
 /// and [add_and_log_event](LogEvent::add_and_log_event) will be log.
