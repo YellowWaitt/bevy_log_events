@@ -15,19 +15,19 @@ default = ["enabled"]
 enabled = ["dep:ron", "dep:serde", "dep:bevy_egui", "dep:regex", "dep:bitflags"]
 
 [dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
     "bevy_log",
     "bevy_state",
     "bevy_window",
 ] }
-bevy_egui = { version = "0.34", optional = true }
+bevy_egui = { version = "0.37", optional = true }
 bitflags = { version = "2.9", optional = true }
 regex = { version = "1", optional = true }
-ron = { version = "0.10", optional = true }
+ron = { version = "0.11", optional = true }
 serde = { version = "1", optional = true }
 
 [dev-dependencies]
-bevy = "0.16"
+bevy = "0.17"
 rand = "0.9"
 rand_chacha = "0.9"
 
