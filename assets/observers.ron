@@ -1,29 +1,34 @@
 LoggedEventsSettings(
     plugin_enabled: true,
     events_settings: {
-        "OnAdd<observers::Mine>": EventSettings(
+        "Add<observers::Mine>": EventSettings(
             enabled: true,
-            pretty: false,
+            pretty: true,
             level: "INFO",
         ),
-        "OnInsert<observers::Mine>": EventSettings(
+        "Despawn<observers::Mine>": EventSettings(
             enabled: true,
-            pretty: false,
+            pretty: true,
             level: "INFO",
         ),
-        "OnRemove<observers::Mine>": EventSettings(
+        "Insert<observers::Mine>": EventSettings(
             enabled: true,
-            pretty: false,
+            pretty: true,
             level: "INFO",
         ),
-        "OnReplace<observers::Mine>": EventSettings(
+        "Remove<observers::Mine>": EventSettings(
             enabled: true,
-            pretty: false,
+            pretty: true,
+            level: "INFO",
+        ),
+        "Replace<observers::Mine>": EventSettings(
+            enabled: true,
+            pretty: true,
             level: "INFO",
         ),
         "observers::Explode": EventSettings(
             enabled: true,
-            pretty: true,
+            pretty: false,
             level: "INFO",
         ),
         "observers::ExplodeMines": EventSettings(

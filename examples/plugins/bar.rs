@@ -1,30 +1,26 @@
 use bevy::prelude::*;
 
-use super::add_event;
+use super::add_message;
 
 pub(super) fn plugin(app: &mut App) {
-    add_event::<A>(app);
-    add_event::<B>(app);
-    add_event::<C>(app);
-    add_event::<D>(app);
-    add_event::<E>(app);
-    add_event::<F>(app);
+    add_message::<A>(app);
+    add_message::<B>(app);
+    add_message::<C>(app);
+    add_message::<D>(app);
+    add_message::<E>(app);
 }
 
-#[derive(Event, Debug, Default)]
+#[derive(Message, Debug, Default)]
 struct A;
 
-#[derive(Event, Debug, Default)]
+#[derive(Message, Debug, Default)]
 struct B;
 
-#[derive(Event, Debug, Default)]
+#[derive(Message, Debug, Default)]
 struct C;
 
-#[derive(Event, Debug, Default)]
+#[derive(Message, Debug, Default)]
 struct D;
 
-#[derive(Event, Debug, Default)]
+#[derive(Message, Debug, Default)]
 struct E;
-
-#[derive(Event, Debug, Default)]
-struct F;

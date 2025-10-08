@@ -6,12 +6,12 @@
 
 # bevy_log_events
 
-[`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a [Bevy](https://bevyengine.org/) plugin that introduce the `LogEvent` trait for Bevy's App. It will helps you log your `Event` while allowing you to configure independently how each events are logged even during program execution.
+[`bevy_log_events`](https://github.com/YellowWaitt/bevy_log_events) is a [Bevy](https://bevyengine.org/) plugin that introduce the `LogEvent` trait for Bevy's App. It will helps you log your `Event` and `Message` while allowing you to configure independently how each of them are logged during runtime.
 
 ## Features
 
-- Easily log your events by adding a single line of code for each of them.
-- You can configure independently how each events will be logged using the `LoggedEventSettings<E>` resources.
+- Easily log your events and message by adding a single line of code for each of them.
+- You can configure independently how each of them will be logged using the `LoggedEventSettings<E>` resources.
 - Your settings are saved when you exit your application and reloaded the next time you launch it.
 - You can use a window to edit the settings for all your logged events :
 
@@ -33,10 +33,15 @@ use bevy::{prelude::*, time::common_conditions::on_timer};
 use bevy_egui::EguiPlugin;
 use bevy_log_events::prelude::*;
 
-// You must implement Debug for the events you want to log
+// You must implement Debug for the messages and events you want to log
+#[derive(Message, Debug)]
+struct MyMessage {
+    value: usize,
+}
+
 #[derive(Event, Debug)]
 struct MyEvent {
-    source: String,
+    value: usize,
 }
 
 fn main() {
@@ -44,18 +49,16 @@ fn main() {
         .add_plugins((
             DefaultPlugins,
             // You need to add the EguiPlugin before the LogEventsPlugin
-            EguiPlugin {
-                enable_multipass_for_primary_context: true,
-            },
+            EguiPlugin::default(),
             // Add the logging plugin
             LogEventsPlugin::new("assets/simple.ron"),
         ))
-        // You can now use add_and_log_event instead of add_event to add and log your events
-        .add_and_log_event::<MyEvent>()
-        // Triggered events can be log too with the use of observers
-        .log_triggered::<MyEvent>()
-        // Using log_event you can also log external events you did not add yourself
-        .log_event::<CursorEntered>()
+        // You can now use add_and_log_message instead of add_message to add and log your messages
+        .add_and_log_message::<MyMessage>()
+        // Events can be log too with the use of observers
+        .log_event::<MyEvent>()
+        // Using log_message you can also log external messages you did not add yourself
+        .log_message::<CursorEntered>()
         .add_systems(
             Update,
             (
@@ -66,18 +69,14 @@ fn main() {
         .run();
 }
 
-// MyEvent will be sent and logged every second at the end of each frame
-fn send_my_event(mut events: EventWriter<MyEvent>) {
-    events.write(MyEvent {
-        source: "sent".into(),
-    });
+// MyMessage will be sent and logged every second at the end of each frame
+fn send_my_event(mut events: MessageWriter<MyMessage>) {
+    events.write(MyMessage { value: 28 });
 }
 
 // MyEvent will be triggered and logged every second during Update
 fn trigger_my_event(mut commands: Commands) {
-    commands.trigger(MyEvent {
-        source: "triggered".into(),
-    });
+    commands.trigger(MyEvent { value: 496 });
 }
 
 // Toggle the editor window
@@ -126,7 +125,7 @@ default = ["dev"]
 
 [dependencies]
 # Declare that you do not want default-features in your dependencies
-bevy_log_events = { version = "0.5.0", default-features = false }
+bevy_log_events = { version = "0.6.0", default-features = false }
 ```
 
 Then you can run your program as follow :
@@ -139,12 +138,13 @@ cargo run --no-default-features
 
 ## Note
 
-Events registered with the use of `log_event` or `add_and_log_event` are all logged in the `Last` schedule inside the `LogEventSet` at the end of each frame. So keep in mind that these events will be logged with a delay and if many events of different types are sent in the same frame they may not be logged in the same order they were sent.
+Messages registered with the use of `log_message` or `add_and_log_message` are all logged in the `Last` schedule inside the `LogMessagesSystems` at the end of each frame. So keep in mind that these messages will be logged with a delay and if many messages of different types are sent in the same frame they may not be logged in the same order they were sent.
 
 ## Bevy Versions Table
 
 | bevy_log_events | bevy | bevy_egui |
 | --------------- | ---- | --------- |
+| 0.6             | 0.17 | 0.37      |
 | 0.5             | 0.16 | 0.34      |
 | 0.4.2           | 0.15 | 0.32      |
 

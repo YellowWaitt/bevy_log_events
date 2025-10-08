@@ -1,7 +1,7 @@
 //! Provide the window for editing the [LoggedEventSettings](crate::LoggedEventSettings).
 
-use bevy::{log::Level, prelude::*, window::PrimaryWindow};
-use bevy_egui::{EguiContext, EguiContextPass, EguiPlugin, egui};
+use bevy::{log::Level, prelude::*};
+use bevy_egui::{EguiContext, EguiPlugin, EguiPrimaryContextPass, PrimaryEguiContext, egui};
 
 use regex::Regex;
 
@@ -15,7 +15,7 @@ const WINDOW_NAME: &str = "Logged Events Settings";
 pub(crate) fn plugin(app: &mut App) {
     assert!(app.is_plugin_added::<EguiPlugin>());
     app.insert_resource(LogEventsWindowState::default())
-        .add_systems(EguiContextPass, show_settings_window);
+        .add_systems(EguiPrimaryContextPass, show_settings_window);
 }
 
 const ALL_LEVELS: [Level; 5] = [
@@ -26,7 +26,7 @@ const ALL_LEVELS: [Level; 5] = [
     Level::TRACE,
 ];
 
-fn level_color(level: Level) -> egui::Color32 {
+const fn level_color(level: Level) -> egui::Color32 {
     match level {
         Level::INFO => egui::Color32::from_rgb(45, 193, 40),
         Level::WARN => egui::Color32::from_rgb(249, 201, 24),
@@ -246,7 +246,7 @@ pub fn log_events_window_ui(world: &mut World, ui: &mut egui::Ui) {
 fn show_settings_window(world: &mut World) {
     let mut open = world.resource::<LogEventsPluginSettings>().show_window;
     if let Ok(egui_context) = world
-        .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+        .query_filtered::<&mut EguiContext, With<PrimaryEguiContext>>()
         .single(world)
     {
         let mut egui_context = egui_context.clone();

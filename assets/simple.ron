@@ -11,5 +11,10 @@ LoggedEventsSettings(
             pretty: false,
             level: "INFO",
         ),
+        "simple::MyMessage": EventSettings(
+            enabled: true,
+            pretty: false,
+            level: "INFO",
+        ),
     },
 )

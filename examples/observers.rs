@@ -1,22 +1,19 @@
-//! Demonstrates how to observe life-cycle triggers as well as define custom ones.
+//! Demonstrates how to observe events: both component lifecycle events and custom events.
 
 use bevy::{
     platform::collections::{HashMap, HashSet},
     prelude::*,
 };
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
-
 use bevy_egui::EguiPlugin;
 use bevy_log_events::prelude::*;
+use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            EguiPlugin {
-                enable_multipass_for_primary_context: false,
-            },
+            EguiPlugin::default(),
             LogEventsPlugin::new("assets/observers.ron"),
         ))
         .init_resource::<SpatialIndex>()
@@ -25,20 +22,18 @@ fn main() {
         // Observers are systems that run when an event is "triggered". This observer runs whenever
         // `ExplodeMines` is triggered.
         .add_observer(
-            |trigger: Trigger<ExplodeMines>,
+            |explode_mines: On<ExplodeMines>,
              mines: Query<&Mine>,
              index: Res<SpatialIndex>,
              mut commands: Commands| {
-                // You can access the trigger data via the `Observer`
-                let event = trigger.event();
                 // Access resources
-                for e in index.get_nearby(event.pos) {
+                for entity in index.get_nearby(explode_mines.pos) {
                     // Run queries
-                    let mine = mines.get(e).unwrap();
-                    if mine.pos.distance(event.pos) < mine.size + event.radius {
+                    let mine = mines.get(entity).unwrap();
+                    if mine.pos.distance(explode_mines.pos) < mine.size + explode_mines.radius {
                         // And queue commands, including triggering additional events
                         // Here we trigger the `Explode` event for entity `e`
-                        commands.trigger_targets(Explode, e);
+                        commands.trigger(Explode { entity });
                     }
                 }
             },
@@ -48,9 +43,9 @@ fn main() {
         // This observer runs whenever the `Mine` component is removed from an entity (including despawning it)
         // and removes it from the spatial index.
         .add_observer(on_remove_mine)
-        .log_triggered::<Explode>()
-        .log_triggered::<ExplodeMines>()
-        .log_component_hooks::<Mine>()
+        .log_event::<Explode>()
+        .log_event::<ExplodeMines>()
+        .log_component_lifecycle::<Mine>()
         .add_systems(Update, toggle_window)
         .run();
 }
@@ -64,7 +59,7 @@ fn toggle_window(
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Component, Debug)]
 struct Mine {
     pos: Vec2,
     size: f32,
@@ -82,14 +77,20 @@ impl Mine {
     }
 }
 
-#[derive(Debug, Event)]
+/// This is a normal [`Event`]. Any observer that watches for it will run when it is triggered.
+#[derive(Event, Debug)]
 struct ExplodeMines {
     pos: Vec2,
     radius: f32,
 }
 
-#[derive(Debug, Event)]
-struct Explode;
+/// An [`EntityEvent`] is a specialized type of [`Event`] that can target a specific entity. In addition to
+/// running normal "top level" observers when it is triggered (which target _any_ entity that Explodes), it will
+/// also run any observers that target the _specific_ entity for that event.
+#[derive(EntityEvent, Debug)]
+struct Explode {
+    entity: Entity,
+}
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
@@ -100,8 +101,8 @@ fn setup(mut commands: Commands) {
         ),
         Node {
             position_type: PositionType::Absolute,
-            top: Val::Px(12.),
-            left: Val::Px(12.),
+            top: px(12),
+            left: px(12),
             ..default()
         },
     ));
@@ -134,44 +135,35 @@ fn setup(mut commands: Commands) {
     commands.spawn(observer);
 }
 
-fn on_add_mine(
-    trigger: Trigger<OnAdd, Mine>,
-    query: Query<&Mine>,
-    mut index: ResMut<SpatialIndex>,
-) {
-    let mine = query.get(trigger.target()).unwrap();
+fn on_add_mine(add: On<Add, Mine>, query: Query<&Mine>, mut index: ResMut<SpatialIndex>) {
+    let mine = query.get(add.entity).unwrap();
     let tile = (
         (mine.pos.x / CELL_SIZE).floor() as i32,
         (mine.pos.y / CELL_SIZE).floor() as i32,
     );
-    index.map.entry(tile).or_default().insert(trigger.target());
+    index.map.entry(tile).or_default().insert(add.entity);
 }
 
 // Remove despawned mines from our index
-fn on_remove_mine(
-    trigger: Trigger<OnRemove, Mine>,
-    query: Query<&Mine>,
-    mut index: ResMut<SpatialIndex>,
-) {
-    let mine = query.get(trigger.target()).unwrap();
+fn on_remove_mine(remove: On<Remove, Mine>, query: Query<&Mine>, mut index: ResMut<SpatialIndex>) {
+    let mine = query.get(remove.entity).unwrap();
     let tile = (
         (mine.pos.x / CELL_SIZE).floor() as i32,
         (mine.pos.y / CELL_SIZE).floor() as i32,
     );
     index.map.entry(tile).and_modify(|set| {
-        set.remove(&trigger.target());
+        set.remove(&remove.entity);
     });
 }
 
-fn explode_mine(trigger: Trigger<Explode>, query: Query<&Mine>, mut commands: Commands) {
-    // If a triggered event is targeting a specific entity you can access it with `.entity()`
-    let id = trigger.target();
-    let Ok(mut entity) = commands.get_entity(id) else {
+fn explode_mine(explode: On<Explode>, query: Query<&Mine>, mut commands: Commands) {
+    // Explode is an EntityEvent. `explode.entity` is the entity that Explode was triggered for.
+    let Ok(mut entity) = commands.get_entity(explode.entity) else {
         return;
     };
-    info!("Boom! {:?} exploded.", id.index());
+    info!("Boom! {} exploded.", explode.entity);
     entity.despawn();
-    let mine = query.get(id).unwrap();
+    let mine = query.get(explode.entity).unwrap();
     // Trigger another explosion cascade.
     commands.trigger(ExplodeMines {
         pos: mine.pos,
@@ -194,18 +186,21 @@ fn draw_shapes(mut gizmos: Gizmos, mines: Query<&Mine>) {
 fn handle_click(
     mouse_button_input: Res<ButtonInput<MouseButton>>,
     camera: Single<(&Camera, &GlobalTransform)>,
-    windows: Single<&Window>,
+    windows: Query<&Window>,
     mut commands: Commands,
 ) {
+    let Ok(windows) = windows.single() else {
+        return;
+    };
+
     let (camera, camera_transform) = *camera;
     if let Some(pos) = windows
         .cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
+        && mouse_button_input.just_pressed(MouseButton::Left)
     {
-        if mouse_button_input.just_pressed(MouseButton::Left) {
-            commands.trigger(ExplodeMines { pos, radius: 1.0 });
-        }
+        commands.trigger(ExplodeMines { pos, radius: 1.0 });
     }
 }
 

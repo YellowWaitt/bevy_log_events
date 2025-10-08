@@ -12,21 +12,19 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            EguiPlugin {
-                enable_multipass_for_primary_context: true,
-            },
+            EguiPlugin::default(),
             LogEventsPlugin::new("assets/window.ron"),
             plugins::plugin,
         ))
-        .log_event::<WindowResized>()
-        .log_event::<WindowCreated>()
-        .log_event::<WindowClosed>()
-        .log_event::<CursorMoved>()
-        .log_event::<CursorEntered>()
-        .log_event::<CursorLeft>()
-        .log_event::<WindowMoved>()
-        .log_event::<AppLifecycle>()
-        .log_event::<AppExit>()
+        .log_message::<WindowResized>()
+        .log_message::<WindowCreated>()
+        .log_message::<WindowClosed>()
+        .log_message::<CursorMoved>()
+        .log_message::<CursorEntered>()
+        .log_message::<CursorLeft>()
+        .log_message::<WindowMoved>()
+        .log_message::<AppLifecycle>()
+        .log_message::<AppExit>()
         .add_systems(Startup, setup)
         .add_systems(Update, toggle_window)
         .run();

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0
+
+### Changed
+
+- Updated `bevy` version to 0.17.
+- Updated `bevy_egui` version to 0.37.
+- Renamed `LogEventsSet` to `LogMessagesSystems` to conform to new [convention](https://bevy.org/news/bevy-0-17/#consistent-naming-conventions-for-system-sets).
+- Updated `LogEvents` trait to conform to the [new event api](https://bevy.org/news/bevy-0-17/#event-observer-overhaul).
+- Renamed `LogEvent::log_component_hooks` to `LogEvent::log_component_lifecycle`.
+
+### Removed
+
+- The `LogEvent::add_and_log_state_scoped_event` function. See migration guide for the [new pattern](https://bevy.org/learn/migration-guides/0-16-to-0-17/#renamed-state-scoped-entities-and-events).
+
 ## 0.5.0
 
 ### Added

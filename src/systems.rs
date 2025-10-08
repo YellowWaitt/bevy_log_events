@@ -14,20 +14,22 @@ use bevy::{
     prelude::*,
 };
 
-use bitflags::bitflags;
 use ron::{de::from_reader, ser::PrettyConfig};
 
 use crate::{
-    EventSettings, LogEventsPlugin, LogEventsPluginSettings, LogEventsSet, LoggedEventSettings,
+    EventSettings, LogEventsPlugin, LogEventsPluginSettings, LogMessagesSystems,
+    LoggedEventSettings,
     utils::{LoggedEventsSettings, get_log_settings_by_id, trigger_name},
 };
+
+const CRATE: &str = "bevy_log_events";
 
 impl Plugin for LogEventsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(LogEventsPluginSettings::new(self))
             .insert_resource(LogSettingsIds::default())
-            .configure_sets(Last, LogEventsSet.run_if(plugin_enabled))
-            .add_systems(PostUpdate, save_settings.run_if(on_event::<AppExit>))
+            .configure_sets(Last, LogMessagesSystems.run_if(plugin_enabled))
+            .add_systems(PostUpdate, save_settings.run_if(on_message::<AppExit>))
             .add_plugins(crate::settings_window::plugin);
     }
 }
@@ -38,7 +40,7 @@ impl LogEventsPluginSettings {
         match Self::load_saved_settings(path) {
             Ok(new) => new,
             Err(err) => {
-                warn!(target: "bevy_log_events", "Error while trying to load settings from {:?}: {}. Using default settings instead.", path, err);
+                warn!(target: CRATE, "Error while trying to load settings from {:?}: {}. Using default settings instead.", path, err);
                 LogEventsPluginSettings::default(path)
             }
         }
@@ -70,40 +72,29 @@ fn plugin_enabled(plugin_settings: Res<LogEventsPluginSettings>) -> bool {
     plugin_settings.enabled
 }
 
-bitflags! {
-    #[derive(Clone, Copy)]
-    pub(crate) struct EventKind: u8 {
-        const EVENT = 1;
-        const TRIGGER = 1 << 1;
-    }
-}
-
 #[derive(Resource, Default, Deref, DerefMut)]
-pub(crate) struct LogSettingsIds(BTreeMap<String, (ComponentId, EventKind)>);
+pub(crate) struct LogSettingsIds(BTreeMap<String, ComponentId>);
 
 impl LogSettingsIds {
-    fn registered(&self, name: &str, kind: EventKind) -> bool {
-        self.get(name).is_some_and(|entry| entry.1.contains(kind))
+    fn registered(&self, name: &str) -> bool {
+        self.get(name).is_some()
     }
 
-    fn register(&mut self, name: String, id: ComponentId, kind: EventKind) {
-        if let Some(entry) = self.get_mut(&name) {
-            entry.1.insert(kind);
-        } else {
-            self.insert(name, (id, kind));
-        }
+    fn register(&mut self, name: String, id: ComponentId) {
+        self.insert(name, id);
     }
+
     pub(crate) fn iter_ids(&self) -> impl Iterator<Item = (&String, &ComponentId)> {
-        self.iter().map(|(name, (id, _))| (name, id))
+        self.iter()
     }
 }
 
-pub(crate) fn register_event<T>(world: &mut World, name: String, kind: EventKind) -> bool
+pub(crate) fn register_event<T>(world: &mut World, name: String) -> bool
 where
     T: Resource + Default + DerefMut<Target = EventSettings>,
 {
     world.resource_scope(|world, mut log_settings_ids: Mut<LogSettingsIds>| {
-        if log_settings_ids.registered(&name, kind) {
+        if log_settings_ids.registered(&name) {
             false
         } else {
             world.insert_resource(T::default());
@@ -114,7 +105,7 @@ where
                 }
             });
             let id = world.components().resource_id::<T>().unwrap();
-            log_settings_ids.register(name, id, kind);
+            log_settings_ids.register(name, id);
             true
         }
     })
@@ -122,11 +113,11 @@ where
 
 fn log(level: Level, to_log: &str) {
     match level {
-        Level::ERROR => error!(target: "bevy_log_events", "{}", to_log),
-        Level::WARN => warn!(target: "bevy_log_events", "{}", to_log),
-        Level::INFO => info!(target: "bevy_log_events", "{}", to_log),
-        Level::DEBUG => debug!(target: "bevy_log_events", "{}", to_log),
-        Level::TRACE => trace!(target: "bevy_log_events", "{}", to_log),
+        Level::ERROR => error!(target: CRATE, "{to_log}"),
+        Level::WARN => warn!(target: CRATE, "{to_log}"),
+        Level::INFO => info!(target: CRATE, "{to_log}"),
+        Level::DEBUG => debug!(target: CRATE, "{to_log}"),
+        Level::TRACE => trace!(target: CRATE, "{to_log}"),
     }
 }
 
@@ -153,16 +144,16 @@ where
     Ok(to_log)
 }
 
-fn format_entity_and_object<T>(
+fn format_entity_and_component<C>(
     settings: &EventSettings,
     event_name: &str,
     entity_name: &Option<&Name>,
     entity: Entity,
-    object: &T,
+    component: &C,
     location: MaybeLocation,
 ) -> Result<String, Box<dyn Error>>
 where
-    T: std::fmt::Debug,
+    C: std::fmt::Debug,
 {
     let mut to_log = String::new();
     to_log.write_fmt(format_args!("{event_name} on "))?;
@@ -176,81 +167,66 @@ where
     }
     to_log.write_str(": ")?;
     if settings.pretty {
-        to_log.write_fmt(format_args!("{object:#?}"))?;
+        to_log.write_fmt(format_args!("{component:#?}"))?;
     } else {
-        to_log.write_fmt(format_args!("{object:?}"))?;
+        to_log.write_fmt(format_args!("{component:?}"))?;
     }
     Ok(to_log)
 }
 
-pub(crate) fn log_event<E>(settings: Res<LoggedEventSettings<E>>, mut events: EventReader<E>)
+pub(crate) fn log_message<M>(settings: Res<LoggedEventSettings<M>>, mut messages: MessageReader<M>)
 where
-    E: Event + std::fmt::Debug,
+    M: Message + std::fmt::Debug,
 {
     if !settings.enabled {
         return;
     }
-    for (event, id) in events.read_with_id() {
-        if let Ok(to_log) = format_event(&settings, event, id.caller) {
+    for (message, id) in messages.read_with_id() {
+        if let Ok(to_log) = format_event(&settings, message, id.caller) {
             log(settings.level, &to_log);
         }
     }
 }
 
-pub(crate) fn log_triggered<E>(
-    trigger: Trigger<E>,
+pub(crate) fn log_event<E>(
+    event: On<E>,
     plugin_settings: Res<LogEventsPluginSettings>,
     settings: Res<LoggedEventSettings<E>>,
-    names: Query<&Name>,
 ) where
     E: Event + std::fmt::Debug,
 {
     if !plugin_settings.enabled || !settings.enabled {
         return;
     }
-    let target = trigger.target();
-    let event = trigger.event();
-    if target != Entity::PLACEHOLDER {
-        let name = names.get(target).ok();
-        if let Ok(to_log) = format_entity_and_object::<E>(
-            &settings,
-            type_name::<E>(),
-            &name,
-            target,
-            event,
-            trigger.caller(),
-        ) {
-            log(settings.level, &to_log);
-        }
-    } else if let Ok(to_log) = format_event(&settings, event, trigger.caller()) {
+    if let Ok(to_log) = format_event(&settings, event.event(), event.caller()) {
         log(settings.level, &to_log);
     }
 }
 
 pub(crate) fn log_component<E, C>(
-    trigger: Trigger<E, C>,
+    event: On<E, C>,
     plugin_settings: Res<LogEventsPluginSettings>,
     settings: Res<LoggedEventSettings<E, C>>,
     query: Query<(&C, Option<&Name>)>,
 ) where
-    E: Event,
+    E: EntityEvent,
     C: Component + std::fmt::Debug,
 {
     if !plugin_settings.enabled || !settings.enabled {
         return;
     }
-    let target = trigger.target();
-    if let Ok((component, name)) = query.get(target) {
-        if let Ok(to_log) = format_entity_and_object::<C>(
+    let target = event.event_target();
+    if let Ok((component, name)) = query.get(target)
+        && let Ok(to_log) = format_entity_and_component::<C>(
             &settings,
             &trigger_name::<E, C>(),
             &name,
             target,
             component,
-            trigger.caller(),
-        ) {
-            log(settings.level, &to_log);
-        }
+            event.caller(),
+        )
+    {
+        log(settings.level, &to_log);
     }
 }
 
@@ -283,7 +259,7 @@ fn save_settings(world: &mut World) {
     let path = plugin_settings.saved_settings.clone();
     if let Err(e) = serialize_settings(&path, to_serialize) {
         error!(
-            target: "bevy_log_events",
+            target: CRATE,
             "Could not save {} at {:?} due to {:?}",
             type_name::<LoggedEventsSettings>(),
             path,
