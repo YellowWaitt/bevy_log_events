@@ -1,6 +1,6 @@
 [package]
 name = "bevy_log_events"
-version = "0.6.0"
+version = "0.7.0"
 edition = "2024"
 description = "A Bevy plugin that helps to log events."
 repository = "https://github.com/YellowWaitt/bevy_log_events"
@@ -15,14 +15,14 @@ default = ["enabled"]
 enabled = ["dep:ron", "dep:serde", "dep:bevy_egui", "dep:regex"]
 
 [dependencies]
-bevy = { version = "0.17", default-features = false, features = ["bevy_log"] }
-bevy_egui = { version = "0.37", optional = true }
+bevy = { version = "0.18", default-features = false, features = ["bevy_log"] }
+bevy_egui = { version = "0.39", optional = true }
 regex = { version = "1", optional = true }
-ron = { version = "0.11", optional = true }
+ron = { version = "0.12", optional = true }
 serde = { version = "1", optional = true }
 
 [dev-dependencies]
-bevy = "0.17"
+bevy = "0.18"
 rand = "0.9"
 rand_chacha = "0.9"
 

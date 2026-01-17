@@ -161,8 +161,12 @@ pub trait LogEvent {
     where
         E: Event + std::fmt::Debug;
 
-    /// Using this function you can spawn an observer that can log [lifecycle] events
-    /// for component `C`.
+    /// Using this function you can spawn an observer that logs the [Component] `C`
+    /// of the target entity for the [EntityEvent] `E`.
+    ///
+    /// This works out of the box with the [lifecycle] events.
+    /// To make this work with your own events you may want to have a look at this
+    /// [article](https://www.christopherbiscardi.com/bevy-observer-filters).
     ///
     /// [lifecycle]: bevy::ecs::lifecycle
     fn log_trigger<E, C>(&mut self) -> &mut Self

@@ -125,7 +125,7 @@ default = ["dev"]
 
 [dependencies]
 # Declare that you do not want default-features in your dependencies
-bevy_log_events = { version = "0.6.0", default-features = false }
+bevy_log_events = { version = "0.7.0", default-features = false }
 ```
 
 Then you can run your program as follow :
@@ -144,6 +144,7 @@ Messages registered with the use of `log_message` or `add_and_log_message` are a
 
 | bevy_log_events | bevy | bevy_egui |
 | --------------- | ---- | --------- |
+| 0.7             | 0.18 | 0.39      |
 | 0.6             | 0.17 | 0.37      |
 | 0.5             | 0.16 | 0.34      |
 | 0.4.2           | 0.15 | 0.32      |
